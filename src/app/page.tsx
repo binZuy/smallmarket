@@ -145,21 +145,21 @@ export default function POSPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fdf7f4] flex flex-col font-sans pb-24">
+    <div className="min-h-screen bg-[#fdf7f4] flex flex-col font-sans pb-28">
       <Navbar onOpenAddSidebar={() => setIsSidebarOpen(true)} />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-2 sm:px-6 py-2.5 space-y-2">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-2.5 sm:px-6 py-3 space-y-2.5">
         {/* Toast Alert */}
         {orderSuccess && (
-          <div className="p-2.5 bg-gradient-to-r from-rose-500 to-amber-500 text-white rounded-xl shadow-md flex items-center justify-between animate-pop">
+          <div className="p-3 bg-gradient-to-r from-rose-500 to-amber-500 text-white rounded-xl shadow-md flex items-center justify-between animate-pop">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-amber-200 shrink-0" />
+              <CheckCircle2 className="w-4.5 h-4.5 text-amber-200 shrink-0" />
               <span className="font-bold text-xs">Đã lưu: {orderSuccess}</span>
             </div>
             <button
               onClick={() => setOrderSuccess(null)}
-              className="text-[11px] font-bold bg-white/20 px-2 py-0.5 rounded"
+              className="text-xs font-bold bg-white/20 px-2 py-0.5 rounded"
             >
               Đóng
             </button>
@@ -167,7 +167,7 @@ export default function POSPage() {
         )}
 
         {/* Short Header & Search Row */}
-        <div className="bg-white p-2 sm:p-3 rounded-xl shadow-xs border border-rose-100 flex items-center justify-between gap-2">
+        <div className="bg-white p-2.5 sm:p-3.5 rounded-xl shadow-xs border border-rose-100 flex items-center justify-between gap-2">
           <h1 className="text-xs sm:text-sm font-black text-slate-800 tracking-tight shrink-0">
             Sản Phẩm
           </h1>
@@ -180,13 +180,13 @@ export default function POSPage() {
               placeholder="Tìm kiếm..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-7 pr-2 py-1 text-xs bg-rose-50/50 border border-rose-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-300 font-medium"
+              className="w-full pl-7 pr-2.5 py-1.5 text-xs bg-rose-50/50 border border-rose-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-300 font-medium"
             />
           </div>
 
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-lg shadow-xs flex items-center gap-0.5 shrink-0"
+            className="px-2.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-lg shadow-xs flex items-center gap-0.5 shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Thêm</span>
@@ -194,31 +194,31 @@ export default function POSPage() {
 
           <button
             onClick={fetchProducts}
-            className="p-1 text-rose-400 hover:text-rose-600 bg-rose-50 rounded-lg transition-colors shrink-0"
+            className="p-1.5 text-rose-400 hover:text-rose-600 bg-rose-50 rounded-lg transition-colors shrink-0"
             title="Tải lại"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
 
-        {/* ULTRA-COMPACT 1-LINE PRODUCT CARDS */}
+        {/* ULTRA-COMPACT 1-LINE PRODUCT CARDS WITH COMFORTABLE PADDING */}
         {loading ? (
-          <div className="bg-white p-6 rounded-xl border border-rose-100 text-center space-y-1">
+          <div className="bg-white p-8 rounded-xl border border-rose-100 text-center space-y-1">
             <RefreshCw className="w-5 h-5 text-rose-400 animate-spin mx-auto" />
             <p className="text-xs text-slate-500 font-medium">Đang tải...</p>
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div className="bg-white p-5 rounded-xl border border-rose-100 text-center space-y-2">
+          <div className="bg-white p-6 rounded-xl border border-rose-100 text-center space-y-2">
             <p className="text-xs font-bold text-slate-600">Không thấy sản phẩm</p>
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="px-2.5 py-1 bg-amber-400 text-slate-950 font-bold text-xs rounded-lg inline-flex items-center gap-1"
+              className="px-3 py-1.5 bg-amber-400 text-slate-950 font-bold text-xs rounded-lg inline-flex items-center gap-1"
             >
-              <Plus className="w-3 h-3" /> Thêm Mới
+              <Plus className="w-3.5 h-3.5" /> Thêm Mới
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {filteredProducts.map((p) => {
               const isSelected = !!selectedItems[p.id];
               const cartItem = selectedItems[p.id];
@@ -227,26 +227,26 @@ export default function POSPage() {
                 <div
                   key={p.id}
                   onClick={() => toggleTickProduct(p)}
-                  className={`px-2.5 py-2 rounded-lg border transition-all cursor-pointer select-none flex items-center justify-between gap-2 ${
+                  className={`px-3 py-3 sm:py-3.5 rounded-xl border transition-all cursor-pointer select-none flex items-center justify-between gap-2.5 ${
                     isSelected
-                      ? 'bg-gradient-to-r from-rose-50 to-amber-50 border-rose-300 ring-1 ring-rose-300'
+                      ? 'bg-gradient-to-r from-rose-50 to-amber-50 border-rose-300 ring-1 ring-rose-300 shadow-xs'
                       : 'bg-white border-rose-100 hover:border-rose-200'
                   }`}
                 >
-                  {/* Single Row: Checkbox + Icon + Name + Price */}
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                  {/* Single Row: Checkbox + Icon + Name + Price with comfortable padding */}
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <div className="shrink-0">
                       {isSelected ? (
-                        <CheckSquare className="w-4 h-4 text-rose-500 fill-rose-100" />
+                        <CheckSquare className="w-4.5 h-4.5 text-rose-500 fill-rose-100" />
                       ) : (
-                        <Square className="w-4 h-4 text-slate-300" />
+                        <Square className="w-4.5 h-4.5 text-slate-300" />
                       )}
                     </div>
 
-                    <ProductIcon name={p.name} className="w-4 h-4 shrink-0" />
+                    <ProductIcon name={p.name} className="w-4.5 h-4.5 shrink-0" />
 
-                    <div className="min-w-0 flex-1 flex items-baseline gap-1.5 truncate">
-                      <span className={`font-bold text-xs truncate ${isSelected ? 'text-rose-950 font-black' : 'text-slate-800'}`}>
+                    <div className="min-w-0 flex-1 flex items-baseline gap-2 truncate">
+                      <span className={`font-bold text-xs sm:text-sm truncate ${isSelected ? 'text-rose-950 font-black' : 'text-slate-800'}`}>
                         {p.name}
                       </span>
 
@@ -260,22 +260,22 @@ export default function POSPage() {
                   {isSelected && (
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="flex items-center gap-0.5 bg-white border border-rose-200 rounded p-0.5 shrink-0"
+                      className="flex items-center gap-1 bg-white border border-rose-200 rounded-lg p-1 shrink-0 shadow-2xs"
                     >
                       <button
                         onClick={() => updateQuantity(p.id, -1)}
-                        className="p-0.5 hover:bg-rose-100 rounded text-rose-700"
+                        className="p-1 hover:bg-rose-100 rounded text-rose-700 transition-colors"
                       >
-                        <Minus className="w-3 h-3" />
+                        <Minus className="w-3.5 h-3.5" />
                       </button>
-                      <span className="px-1 font-black text-xs text-slate-900 min-w-[12px] text-center">
+                      <span className="px-1.5 font-black text-xs text-slate-900 min-w-[14px] text-center">
                         {cartItem.quantity}
                       </span>
                       <button
                         onClick={() => updateQuantity(p.id, 1)}
-                        className="p-0.5 hover:bg-rose-100 rounded text-rose-700"
+                        className="p-1 hover:bg-rose-100 rounded text-rose-700 transition-colors"
                       >
-                        <Plus className="w-3 h-3" />
+                        <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   )}
@@ -288,12 +288,12 @@ export default function POSPage() {
 
       {/* Floating Bottom Sticky Summary Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#2d1b22] text-white border-t border-[#422933] shadow-2xl">
-        <div className="max-w-5xl mx-auto px-3 py-2">
+        <div className="max-w-5xl mx-auto px-3 py-2.5">
           <div className="flex items-center justify-between gap-2">
             {/* Short Summary */}
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div className="p-1.5 bg-rose-950 text-amber-300 rounded-lg shrink-0">
-                <ShoppingBag className="w-4 h-4" />
+                <ShoppingBag className="w-4.5 h-4.5" />
               </div>
 
               <div className="min-w-0">
@@ -311,7 +311,7 @@ export default function POSPage() {
               {totalQuantity > 0 && (
                 <button
                   onClick={clearSelection}
-                  className="px-2 py-1.5 text-xs text-rose-200 hover:text-white bg-[#422933] rounded-lg font-bold"
+                  className="px-2.5 py-1.5 text-xs text-rose-200 hover:text-white bg-[#422933] rounded-lg font-bold"
                 >
                   Xóa
                 </button>
@@ -320,7 +320,7 @@ export default function POSPage() {
               <button
                 onClick={handleCheckoutOrder}
                 disabled={totalQuantity === 0 || submitting}
-                className="px-3.5 py-2 bg-gradient-to-r from-amber-400 to-rose-400 text-slate-950 font-black text-xs rounded-lg shadow-sm flex items-center gap-1 active:scale-95 disabled:opacity-50"
+                className="px-4 py-2 bg-gradient-to-r from-amber-400 to-rose-400 text-slate-950 font-black text-xs rounded-lg shadow-sm flex items-center gap-1 active:scale-95 disabled:opacity-50"
               >
                 {submitting ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-950" />
