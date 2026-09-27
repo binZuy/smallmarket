@@ -30,7 +30,15 @@ export async function POST(request: Request) {
       }
     });
 
-    const transactionsToCreate = [];
+    type TransactionType = 'INCOME' | 'EXPENSE';
+    
+    const transactionsToCreate: {
+      date: Date;
+      type: TransactionType;
+      category: string;
+      amount: number;
+      notes: string;
+    }[] = [];
 
     if (cashIncome !== undefined && cashIncome !== null && cashIncome !== '') {
       transactionsToCreate.push({
@@ -74,7 +82,7 @@ export async function POST(request: Request) {
 
     if (transactionsToCreate.length > 0) {
       await prisma.transaction.createMany({
-        data: transactionsToCreate as any,
+        data: transactionsToCreate,
       });
     }
 

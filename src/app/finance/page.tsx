@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { format, parseISO, addDays, subDays } from 'date-fns';
 import { FileSpreadsheet, Save, Loader2, Check } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import Link from 'next/link';
 
 type TransactionType = 'INCOME' | 'EXPENSE';
 
@@ -230,13 +231,22 @@ export default function FinanceMonthlyDashboard() {
                 className="border-2 border-green-400 rounded-xl p-2 text-xl font-bold text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
-            <button 
-              onClick={handleExportExcel}
-              className="flex items-center gap-2 bg-emerald-100 text-emerald-800 px-4 py-2 rounded-lg font-bold hover:bg-emerald-200 transition-colors border border-emerald-300"
-            >
-              <FileSpreadsheet className="w-5 h-5" />
-              Xuất Excel
-            </button>
+            
+            <div className="flex gap-2">
+              <Link 
+                href="/finance/verify"
+                className="flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-bold hover:bg-blue-200 transition-colors border border-blue-300"
+              >
+                Đối Chiếu Sổ
+              </Link>
+              <button 
+                onClick={handleExportExcel}
+                className="flex items-center gap-2 bg-emerald-100 text-emerald-800 px-4 py-2 rounded-lg font-bold hover:bg-emerald-200 transition-colors border border-emerald-300"
+              >
+                <FileSpreadsheet className="w-5 h-5" />
+                Xuất Excel
+              </button>
+            </div>
           </div>
         </div>
 
