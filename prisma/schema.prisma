@@ -51,3 +51,22 @@ model OrderItem {
 
   @@map("order_items")
 }
+
+model Transaction {
+  id          String          @id @default(cuid())
+  date        DateTime        // Ngày của giao dịch
+  type        TransactionType // Thu (INCOME) hoặc Chi (EXPENSE)
+  category    String          // Danh mục (VD: Chuyển khoản, Tiền mặt, Nhập nước, Bánh mì...)
+  amount      Float           // Số tiền
+  quantity    Int?            // Số lượng (VD: bao nhiêu thùng, bao nhiêu cái) - Thường dùng cho Chi
+  notes       String?         // Ghi chú thêm
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@map("transactions")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}

@@ -14,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi">
-      <body className="bg-slate-100 text-slate-900 antialiased min-h-screen">
+      <body className="bg-[#F0FDF4] text-gray-900 antialiased min-h-screen text-lg font-medium">
         {children}
       </body>
     </html>
