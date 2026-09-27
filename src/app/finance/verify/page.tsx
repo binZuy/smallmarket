@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import Link from 'next/link';
 import { ArrowLeft, Download, ImageIcon } from 'lucide-react';
-import Image from 'next/image';
+import Navbar from '@/components/Navbar';
 
 export default function VerifyHandwrittenPage() {
   // Read images directly from public directory (Server Component)
@@ -18,8 +18,9 @@ export default function VerifyHandwrittenPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F0FDF4] p-4 md:p-8 font-sans text-gray-900">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#F0FDF4] font-sans text-gray-900 pb-12">
+      <Navbar />
+      <div className="max-w-6xl mx-auto space-y-6 mt-4 p-4 md:p-8 pt-0">
         
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">

@@ -5,6 +5,7 @@ import { format, subDays } from 'date-fns';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Navbar from '@/components/Navbar';
 
 interface Transaction {
   id: string;
@@ -14,6 +15,7 @@ interface Transaction {
   amount: number;
   notes: string;
 }
+
 
 export default function FinanceDailyDetail({ params }: { params: Promise<{ date: string }> }) {
   const router = useRouter();
@@ -131,8 +133,9 @@ export default function FinanceDailyDetail({ params }: { params: Promise<{ date:
   const realCashRevenue = cashNow - cashPrev;
 
   return (
-    <div className="min-h-screen bg-[#F0FDF4] p-4 md:p-8 font-sans text-gray-900">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#F0FDF4] font-sans text-gray-900 pb-12">
+      <Navbar />
+      <div className="max-w-4xl mx-auto space-y-6 mt-4 p-4 md:p-8 pt-0">
         
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">

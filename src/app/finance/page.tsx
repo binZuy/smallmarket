@@ -5,6 +5,7 @@ import { format, parseISO, addDays, subDays } from 'date-fns';
 import { FileSpreadsheet, Save, Loader2, Check } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 
 type TransactionType = 'INCOME' | 'EXPENSE';
 
@@ -214,8 +215,9 @@ export default function FinanceMonthlyDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F0FDF4] p-2 md:p-8 font-sans text-gray-900">
-      <div className="max-w-[1400px] mx-auto space-y-6">
+    <div className="min-h-screen bg-[#F0FDF4] font-sans text-gray-900 pb-12">
+      <Navbar />
+      <div className="max-w-[1400px] mx-auto space-y-6 mt-4 p-2 md:p-8 pt-0">
         
         {/* Header */}
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border-2 border-green-200 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -257,15 +259,15 @@ export default function FinanceMonthlyDashboard() {
               <thead>
                 <tr>
                   <th rowSpan={2} className="p-3 bg-gray-100 border border-gray-300 text-center font-black text-gray-700 w-24">Ngày</th>
-                  <th colSpan={3} className="p-2 bg-blue-100 border border-blue-300 text-center font-black text-blue-800">THU (+)</th>
+                  <th colSpan={3} className="p-2 bg-green-100 border border-green-300 text-center font-black text-green-800">THU (+)</th>
                   <th colSpan={2} className="p-2 bg-red-100 border border-red-300 text-center font-black text-red-800">CHI (-)</th>
-                  <th rowSpan={2} className="p-3 bg-green-100 border border-green-300 text-center font-black text-green-900 w-40">DOANH THU</th>
+                  <th rowSpan={2} className="p-3 bg-emerald-100 border border-emerald-300 text-center font-black text-emerald-900 w-40">DOANH THU</th>
                   <th rowSpan={2} className="p-3 bg-gray-100 border border-gray-300 text-center font-black text-gray-700 w-24">Lưu</th>
                 </tr>
                 <tr>
-                  <th className="p-2 bg-blue-50 border border-blue-200 text-center font-bold text-blue-700 text-sm">TM Hôm Trước</th>
-                  <th className="p-2 bg-blue-50 border border-blue-200 text-center font-bold text-blue-700 text-sm">TM Nay (Két)</th>
-                  <th className="p-2 bg-blue-50 border border-blue-200 text-center font-bold text-blue-700 text-sm">Chuyển Khoản</th>
+                  <th className="p-2 bg-green-50 border border-green-200 text-center font-bold text-green-700 text-sm">TM Hôm Trước</th>
+                  <th className="p-2 bg-green-50 border border-green-200 text-center font-bold text-green-700 text-sm">TM Nay (Két)</th>
+                  <th className="p-2 bg-green-50 border border-green-200 text-center font-bold text-green-700 text-sm">Chuyển Khoản</th>
                   <th className="p-2 bg-red-50 border border-red-200 text-center font-bold text-red-700 text-sm">Chi TM</th>
                   <th className="p-2 bg-red-50 border border-red-200 text-center font-bold text-red-700 text-sm">Chi TK</th>
                 </tr>
@@ -289,28 +291,28 @@ export default function FinanceMonthlyDashboard() {
                       </td>
                       
                       {/* TM Hôm Trước (Read only) */}
-                      <td className="p-2 border border-blue-100 text-center font-bold text-gray-500 bg-gray-50">
+                      <td className="p-2 border border-green-100 text-center font-bold text-gray-500 bg-gray-50">
                         {day.cashPrev > 0 ? day.cashPrev.toLocaleString('vi-VN') : '-'}
                       </td>
                       
                       {/* TM Nay (Editable) */}
-                      <td className="p-1 border border-blue-100">
+                      <td className="p-1 border border-green-100">
                         <input
                           type="text"
                           value={formatCurrency(day.cashNow)}
                           onChange={(e) => handleInputChange(index, 'cashNow', e.target.value)}
-                          className="w-full text-center p-2 rounded bg-transparent font-bold text-blue-700 focus:bg-white focus:ring-2 focus:ring-blue-400 outline-none transition-all"
+                          className="w-full text-center p-2 rounded bg-transparent font-bold text-green-700 focus:bg-white focus:ring-2 focus:ring-green-400 outline-none transition-all"
                           placeholder="-"
                         />
                       </td>
 
                       {/* Chuyển Khoản (Editable) */}
-                      <td className="p-1 border border-blue-100">
+                      <td className="p-1 border border-green-100">
                         <input
                           type="text"
                           value={formatCurrency(day.transfer)}
                           onChange={(e) => handleInputChange(index, 'transfer', e.target.value)}
-                          className="w-full text-center p-2 rounded bg-transparent font-bold text-blue-700 focus:bg-white focus:ring-2 focus:ring-blue-400 outline-none transition-all"
+                          className="w-full text-center p-2 rounded bg-transparent font-bold text-green-700 focus:bg-white focus:ring-2 focus:ring-green-400 outline-none transition-all"
                           placeholder="-"
                         />
                       </td>
@@ -338,7 +340,7 @@ export default function FinanceMonthlyDashboard() {
                       </td>
 
                       {/* Doanh Thu (Calculated) */}
-                      <td className={`p-2 border border-green-200 text-center font-black text-lg ${revenue > 0 ? 'text-green-700' : revenue < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                      <td className={`p-2 border border-emerald-200 text-center font-black text-lg ${revenue > 0 ? 'text-emerald-700' : revenue < 0 ? 'text-red-600' : 'text-gray-400'}`}>
                         {hasData ? revenue.toLocaleString('vi-VN') : '-'}
                       </td>
 
