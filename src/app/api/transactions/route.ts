@@ -6,13 +6,26 @@ const prisma = new PrismaClient();
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const dateStr = searchParams.get('date');
+  const monthStr = searchParams.get('month'); // format: yyyy-MM
   
   let dateFilter = {};
+  
   if (dateStr) {
     const startDate = new Date(dateStr);
     startDate.setHours(0, 0, 0, 0);
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + 1);
+    
+    dateFilter = {
+      date: {
+        gte: startDate,
+        lt: endDate,
+      }
+    };
+  } else if (monthStr) {
+    const [year, month] = monthStr.split('-');
+    const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+    const endDate = new Date(parseInt(year), parseInt(month), 1);
     
     dateFilter = {
       date: {
@@ -26,7 +39,7 @@ export async function GET(request: Request) {
     const transactions = await prisma.transaction.findMany({
       where: dateFilter,
       orderBy: {
-        createdAt: 'desc' // Lấy mới nhất lên đầu
+        date: 'desc'
       }
     });
     return NextResponse.json(transactions);
