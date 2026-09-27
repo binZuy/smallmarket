@@ -117,7 +117,7 @@ export default function FinanceDashboard() {
       const ws = wb.Sheets[wsname];
       const data = XLSX.utils.sheet_to_json(ws);
 
-      const formattedData = data.map((row: any) => ({
+      const formattedData = data.map((row: Record<string, any>) => ({
         date: currentDate, // Dùng ngày hiện tại hoặc đọc từ file
         type: row['Loại'] === 'Thu' ? 'INCOME' : 'EXPENSE',
         category: row['Hạng mục'],

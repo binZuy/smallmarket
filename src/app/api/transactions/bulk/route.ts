@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     }
 
     const created = await prisma.transaction.createMany({
-      data: transactions.map((t: any) => ({
+      data: transactions.map((t: Record<string, any>) => ({
         date: new Date(t.date),
         type: t.type,
         category: t.category,
