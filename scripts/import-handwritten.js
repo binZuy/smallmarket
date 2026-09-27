@@ -36,10 +36,23 @@ async function main() {
     { date: '2026-08-16', type: 'INCOME', category: 'Chuyển khoản', amount: 3520000, notes: 'TK' },
 
     // Add previously extracted September dates for context
+    { date: '2026-09-10', type: 'INCOME', category: 'Tiền mặt', amount: 1800000, notes: 'Két' },
+    { date: '2026-09-10', type: 'INCOME', category: 'Chuyển khoản', amount: 945000, notes: 'Quẹt thẻ' },
+    { date: '2026-09-12', type: 'INCOME', category: 'Tiền mặt', amount: 1550000, notes: 'Két' },
+    { date: '2026-09-13', type: 'INCOME', category: 'Tiền mặt', amount: 1700000, notes: 'Két' },
+    { date: '2026-09-13', type: 'INCOME', category: 'Chuyển khoản', amount: 1075000, notes: 'Quẹt thẻ' },
+    { date: '2026-09-14', type: 'INCOME', category: 'Tiền mặt', amount: 900000, notes: 'Két' },
+    { date: '2026-09-14', type: 'INCOME', category: 'Chuyển khoản', amount: 920000, notes: 'Quẹt thẻ' },
     { date: '2026-09-15', type: 'INCOME', category: 'Tiền mặt', amount: 700000, notes: 'Két' },
     { date: '2026-09-15', type: 'INCOME', category: 'Chuyển khoản', amount: 1071000, notes: 'Quẹt thẻ' },
     { date: '2026-09-16', type: 'INCOME', category: 'Tiền mặt', amount: 1500000, notes: 'Két' },
     { date: '2026-09-16', type: 'INCOME', category: 'Chuyển khoản', amount: 1073000, notes: 'Quẹt thẻ' },
+    { date: '2026-09-17', type: 'INCOME', category: 'Tiền mặt', amount: 1500000, notes: 'Két' },
+    { date: '2026-09-17', type: 'INCOME', category: 'Chuyển khoản', amount: 1149000, notes: 'Quẹt thẻ' },
+    { date: '2026-09-18', type: 'INCOME', category: 'Tiền mặt', amount: 2000000, notes: 'Két' },
+    { date: '2026-09-18', type: 'INCOME', category: 'Chuyển khoản', amount: 766000, notes: 'Quẹt thẻ' },
+    { date: '2026-09-19', type: 'INCOME', category: 'Tiền mặt', amount: 1000000, notes: 'Két' },
+    { date: '2026-09-19', type: 'INCOME', category: 'Chuyển khoản', amount: 744000, notes: 'Quẹt thẻ' },
   ];
 
   // First, clear existing to avoid duplicates if re-running
