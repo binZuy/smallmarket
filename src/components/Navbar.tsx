@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingCart, BarChart3, PlusCircle, Store } from 'lucide-react';
+import { ShoppingCart, BarChart3, PlusCircle, Store, Banknote } from 'lucide-react';
 
 interface NavbarProps {
   onOpenAddSidebar?: () => void;
@@ -20,7 +20,7 @@ export default function Navbar({ onOpenAddSidebar }: NavbarProps) {
             <div className="p-1.5 bg-gradient-to-tr from-amber-400 to-rose-400 rounded-lg text-slate-950 font-bold flex items-center justify-center">
               <Store className="w-4 h-4 text-slate-950" />
             </div>
-            <span className="font-black text-xs sm:text-base tracking-tight text-white whitespace-nowrap">
+            <span className="font-black text-xs sm:text-base tracking-tight text-white whitespace-nowrap hidden sm:block">
               Cửa Hàng
             </span>
           </Link>
@@ -49,6 +49,18 @@ export default function Navbar({ onOpenAddSidebar }: NavbarProps) {
             >
               <BarChart3 className="w-3.5 h-3.5" />
               <span>Thống Kê</span>
+            </Link>
+
+            <Link
+              href="/finance"
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                pathname === '/finance'
+                  ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-xs'
+                  : 'text-rose-100/80 hover:bg-[#3d252e]'
+              }`}
+            >
+              <Banknote className="w-3.5 h-3.5" />
+              <span>Sổ Quỹ</span>
             </Link>
 
             {onOpenAddSidebar && (
