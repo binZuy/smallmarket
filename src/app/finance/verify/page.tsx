@@ -33,18 +33,18 @@ export default function VerifyHandwrittenPage() {
         </div>
 
         {/* Action Panel */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-green-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border-2 border-green-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div>
-            <h2 className="text-xl font-bold text-gray-800 mb-1">Dữ liệu chi tiết bóc tách từ ảnh</h2>
-            <p className="text-gray-500 text-sm">Tải file Excel/CSV về để dò lại từng con số do máy tự động luận chữ viết tay.</p>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-1">Dữ liệu chi tiết bóc tách từ ảnh</h2>
+            <p className="text-gray-500 text-xs sm:text-sm">Tải file Excel/CSV về để dò lại từng con số do máy tự động luận chữ viết tay.</p>
           </div>
           <a 
             href="/chitiet_sotay.csv" 
             download
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow transition-all active:scale-95 whitespace-nowrap"
+            className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-bold shadow transition-all active:scale-95 w-full sm:w-auto whitespace-nowrap text-sm sm:text-base"
           >
             <Download className="w-5 h-5" />
-            Tải File Đối Chiếu (.CSV)
+            Tải File (.CSV)
           </a>
         </div>
 

@@ -138,11 +138,11 @@ export default function FinanceDailyDetail({ params }: { params: Promise<{ date:
       <div className="max-w-4xl mx-auto space-y-6 mt-4 p-4 md:p-8 pt-0">
         
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Link href="/finance" className="p-2 bg-white rounded-full shadow-sm hover:bg-green-50 transition-colors">
-            <ArrowLeft className="w-6 h-6 text-green-700" />
+        <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <Link href="/finance" className="p-1.5 sm:p-2 bg-white rounded-full shadow-sm hover:bg-green-50 transition-colors">
+            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-green-700" />
           </Link>
-          <h1 className="text-2xl md:text-3xl font-bold text-green-800">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-green-800">
             Chi tiết ngày: {format(new Date(date), 'dd/MM/yyyy')}
           </h1>
         </div>
@@ -160,21 +160,21 @@ export default function FinanceDailyDetail({ params }: { params: Promise<{ date:
                 <span className="text-gray-600">Tiền mặt hôm trước:</span>
                 <span className="font-bold text-gray-400">- {formatCurrency(cashPrev)}</span>
               </div>
-              <div className="flex justify-between items-center text-lg border-t pt-2 border-dashed">
+              <div className="flex justify-between items-center text-base sm:text-lg border-t pt-2 border-dashed">
                 <span className="font-bold text-blue-900">Thực thu Tiền mặt:</span>
                 <span className="font-black text-blue-600">{formatCurrency(realCashRevenue)}</span>
               </div>
-              <div className="flex justify-between items-center text-lg pt-2">
+              <div className="flex justify-between items-center text-base sm:text-lg pt-2">
                 <span className="font-bold text-blue-900">Chuyển khoản:</span>
                 <span className="font-black text-blue-600">{formatCurrency(transfer)}</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-orange-200">
-            <h2 className="text-xl font-bold text-orange-800 mb-4 border-b pb-2">Tổng Chi ra</h2>
-            <div className="flex h-full items-center justify-center -mt-6">
-              <span className="text-4xl font-black text-red-600">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border-2 border-orange-200">
+            <h2 className="text-lg sm:text-xl font-bold text-orange-800 mb-4 border-b pb-2">Tổng Chi ra</h2>
+            <div className="flex h-full items-center justify-center -mt-4 sm:-mt-6">
+              <span className="text-3xl sm:text-4xl font-black text-red-600">
                 - {formatCurrency(totalExpense)}
               </span>
             </div>
@@ -192,14 +192,14 @@ export default function FinanceDailyDetail({ params }: { params: Promise<{ date:
 
           <div className="p-4">
             {/* Add new expense form */}
-            <form onSubmit={handleAddExpense} className="flex flex-col sm:flex-row gap-3 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
+            <form onSubmit={handleAddExpense} className="flex flex-col sm:flex-row gap-3 mb-6 bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200">
               <div className="flex-1">
                 <input 
                   type="text" 
                   value={newExpenseNotes}
                   onChange={(e) => setNewExpenseNotes(e.target.value)}
-                  placeholder="Ghi chú (VD: Mua 1 thùng dưa, trả tiền đá...)"
-                  className="w-full border border-gray-300 rounded-lg p-3 text-lg outline-none focus:border-red-400 focus:ring-1 focus:ring-red-200"
+                  placeholder="Ghi chú (VD: Mua 1 thùng dưa...)"
+                  className="w-full border border-gray-300 rounded-lg p-2.5 sm:p-3 text-base sm:text-lg outline-none focus:border-red-400 focus:ring-1 focus:ring-red-200"
                   required
                 />
               </div>
@@ -209,16 +209,16 @@ export default function FinanceDailyDetail({ params }: { params: Promise<{ date:
                   value={newExpenseAmount}
                   onChange={(e) => setNewExpenseAmount(e.target.value)}
                   placeholder="Số tiền"
-                  className="w-full border border-gray-300 rounded-lg p-3 text-lg outline-none focus:border-red-400 focus:ring-1 focus:ring-red-200 font-bold text-red-600"
+                  className="w-full border border-gray-300 rounded-lg p-2.5 sm:p-3 text-base sm:text-lg outline-none focus:border-red-400 focus:ring-1 focus:ring-red-200 font-bold text-red-600"
                   required
                 />
               </div>
               <button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:bg-gray-400"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:bg-gray-400 text-sm sm:text-base w-full sm:w-auto"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 Thêm
               </button>
             </form>

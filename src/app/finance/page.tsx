@@ -223,29 +223,29 @@ export default function FinanceMonthlyDashboard() {
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border-2 border-green-200 flex flex-col md:flex-row justify-between items-center gap-4">
           <h1 className="text-2xl md:text-3xl font-bold text-green-800">Sổ Thu Chi Tổng Hợp</h1>
           
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <label className="text-lg font-bold text-gray-700">Tháng:</label>
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
+              <label className="text-base sm:text-lg font-bold text-gray-700">Tháng:</label>
               <input 
                 type="month" 
                 value={currentMonth}
                 onChange={(e) => setCurrentMonth(e.target.value)}
-                className="border-2 border-green-400 rounded-xl p-2 text-xl font-bold text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="border-2 border-green-400 rounded-lg sm:rounded-xl p-1.5 sm:p-2 text-base sm:text-xl font-bold text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 flex-1 sm:flex-none"
               />
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               <Link 
                 href="/finance/verify"
-                className="flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-bold hover:bg-blue-200 transition-colors border border-blue-300"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-blue-100 text-blue-800 px-3 sm:px-4 py-2 rounded-lg font-bold hover:bg-blue-200 transition-colors border border-blue-300 text-sm sm:text-base whitespace-nowrap"
               >
-                Đối Chiếu Sổ
+                Đối Chiếu
               </Link>
               <button 
                 onClick={handleExportExcel}
-                className="flex items-center gap-2 bg-emerald-100 text-emerald-800 px-4 py-2 rounded-lg font-bold hover:bg-emerald-200 transition-colors border border-emerald-300"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-emerald-100 text-emerald-800 px-3 sm:px-4 py-2 rounded-lg font-bold hover:bg-emerald-200 transition-colors border border-emerald-300 text-sm sm:text-base whitespace-nowrap"
               >
-                <FileSpreadsheet className="w-5 h-5" />
+                <FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5" />
                 Xuất Excel
               </button>
             </div>
@@ -255,27 +255,27 @@ export default function FinanceMonthlyDashboard() {
         {/* Interactive Table */}
         <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[1000px]">
+            <table className="w-full text-left border-collapse min-w-[700px] md:min-w-[1000px]">
               <thead>
                 <tr>
-                  <th rowSpan={2} className="p-3 bg-gray-100 border border-gray-300 text-center font-black text-gray-700 w-24">Ngày</th>
-                  <th colSpan={3} className="p-2 bg-green-100 border border-green-300 text-center font-black text-green-800">THU (+)</th>
-                  <th colSpan={2} className="p-2 bg-red-100 border border-red-300 text-center font-black text-red-800">CHI (-)</th>
-                  <th rowSpan={2} className="p-3 bg-emerald-100 border border-emerald-300 text-center font-black text-emerald-900 w-40">DOANH THU</th>
-                  <th rowSpan={2} className="p-3 bg-gray-100 border border-gray-300 text-center font-black text-gray-700 w-24">Lưu</th>
+                  <th rowSpan={2} className="p-2 md:p-3 bg-gray-100 border border-gray-300 text-center font-black text-gray-700 w-16 md:w-24 text-xs md:text-base">Ngày</th>
+                  <th colSpan={3} className="p-1 md:p-2 bg-green-100 border border-green-300 text-center font-black text-green-800 text-sm md:text-base">THU (+)</th>
+                  <th colSpan={2} className="p-1 md:p-2 bg-red-100 border border-red-300 text-center font-black text-red-800 text-sm md:text-base">CHI (-)</th>
+                  <th rowSpan={2} className="p-2 md:p-3 bg-emerald-100 border border-emerald-300 text-center font-black text-emerald-900 w-24 md:w-40 text-xs md:text-base">DOANH THU</th>
+                  <th rowSpan={2} className="p-2 md:p-3 bg-gray-100 border border-gray-300 text-center font-black text-gray-700 w-16 md:w-24 text-xs md:text-base">Lưu</th>
                 </tr>
                 <tr>
-                  <th className="p-2 bg-green-50 border border-green-200 text-center font-bold text-green-700 text-sm">TM Hôm Trước</th>
-                  <th className="p-2 bg-green-50 border border-green-200 text-center font-bold text-green-700 text-sm">TM Nay (Két)</th>
-                  <th className="p-2 bg-green-50 border border-green-200 text-center font-bold text-green-700 text-sm">Chuyển Khoản</th>
-                  <th className="p-2 bg-red-50 border border-red-200 text-center font-bold text-red-700 text-sm">Chi TM</th>
-                  <th className="p-2 bg-red-50 border border-red-200 text-center font-bold text-red-700 text-sm">Chi TK</th>
+                  <th className="p-1 md:p-2 bg-green-50 border border-green-200 text-center font-bold text-green-700 text-[10px] md:text-sm">TM Hôm Trước</th>
+                  <th className="p-1 md:p-2 bg-green-50 border border-green-200 text-center font-bold text-green-700 text-[10px] md:text-sm">TM Nay (Két)</th>
+                  <th className="p-1 md:p-2 bg-green-50 border border-green-200 text-center font-bold text-green-700 text-[10px] md:text-sm">Chuyển Khoản</th>
+                  <th className="p-1 md:p-2 bg-red-50 border border-red-200 text-center font-bold text-red-700 text-[10px] md:text-sm">Chi TM</th>
+                  <th className="p-1 md:p-2 bg-red-50 border border-red-200 text-center font-bold text-red-700 text-[10px] md:text-sm">Chi TK</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={8} className="p-8 text-center text-gray-500 font-bold text-xl">Đang tải dữ liệu...</td>
+                    <td colSpan={8} className="p-4 md:p-8 text-center text-gray-500 font-bold text-base md:text-xl">Đang tải dữ liệu...</td>
                   </tr>
                 ) : daysInMonth.map((day, index) => {
                   const revenue = (day.cashNow - day.cashPrev + day.transfer) - (day.cashExpense + day.transferExpense);
@@ -284,85 +284,85 @@ export default function FinanceMonthlyDashboard() {
                   
                   return (
                     <tr key={day.date} className={`border-b border-gray-200 hover:bg-gray-50 ${isWeekend ? 'bg-orange-50/30' : ''} ${hasData ? 'bg-green-50/20' : ''}`}>
-                      <td className="p-2 border border-gray-200 text-center font-bold">
+                      <td className="p-1 md:p-2 border border-gray-200 text-center font-bold text-xs md:text-base">
                         <Link href={`/finance/${day.date}`} className="text-blue-600 hover:text-blue-800 hover:underline">
                           {format(new Date(day.date), 'dd/MM')}
                         </Link>
                       </td>
                       
                       {/* TM Hôm Trước (Read only) */}
-                      <td className="p-2 border border-green-100 text-center font-bold text-gray-500 bg-gray-50">
+                      <td className="p-1 md:p-2 border border-green-100 text-center font-bold text-gray-500 bg-gray-50 text-xs md:text-base">
                         {day.cashPrev > 0 ? day.cashPrev.toLocaleString('vi-VN') : '-'}
                       </td>
                       
                       {/* TM Nay (Editable) */}
-                      <td className="p-1 border border-green-100">
+                      <td className="p-0.5 md:p-1 border border-green-100">
                         <input
                           type="text"
                           value={formatCurrency(day.cashNow)}
                           onChange={(e) => handleInputChange(index, 'cashNow', e.target.value)}
-                          className="w-full text-center p-2 rounded bg-transparent font-bold text-green-700 focus:bg-white focus:ring-2 focus:ring-green-400 outline-none transition-all"
+                          className="w-full text-center p-1 md:p-2 rounded bg-transparent font-bold text-green-700 focus:bg-white focus:ring-2 focus:ring-green-400 outline-none transition-all text-sm md:text-base"
                           placeholder="-"
                         />
                       </td>
 
                       {/* Chuyển Khoản (Editable) */}
-                      <td className="p-1 border border-green-100">
+                      <td className="p-0.5 md:p-1 border border-green-100">
                         <input
                           type="text"
                           value={formatCurrency(day.transfer)}
                           onChange={(e) => handleInputChange(index, 'transfer', e.target.value)}
-                          className="w-full text-center p-2 rounded bg-transparent font-bold text-green-700 focus:bg-white focus:ring-2 focus:ring-green-400 outline-none transition-all"
+                          className="w-full text-center p-1 md:p-2 rounded bg-transparent font-bold text-green-700 focus:bg-white focus:ring-2 focus:ring-green-400 outline-none transition-all text-sm md:text-base"
                           placeholder="-"
                         />
                       </td>
 
                       {/* Chi TM (Editable) */}
-                      <td className="p-1 border border-red-100">
+                      <td className="p-0.5 md:p-1 border border-red-100">
                         <input
                           type="text"
                           value={formatCurrency(day.cashExpense)}
                           onChange={(e) => handleInputChange(index, 'cashExpense', e.target.value)}
-                          className="w-full text-center p-2 rounded bg-transparent font-bold text-red-600 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all"
+                          className="w-full text-center p-1 md:p-2 rounded bg-transparent font-bold text-red-600 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all text-sm md:text-base"
                           placeholder="-"
                         />
                       </td>
 
                       {/* Chi TK (Editable) */}
-                      <td className="p-1 border border-red-100">
+                      <td className="p-0.5 md:p-1 border border-red-100">
                         <input
                           type="text"
                           value={formatCurrency(day.transferExpense)}
                           onChange={(e) => handleInputChange(index, 'transferExpense', e.target.value)}
-                          className="w-full text-center p-2 rounded bg-transparent font-bold text-red-600 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all"
+                          className="w-full text-center p-1 md:p-2 rounded bg-transparent font-bold text-red-600 focus:bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all text-sm md:text-base"
                           placeholder="-"
                         />
                       </td>
 
                       {/* Doanh Thu (Calculated) */}
-                      <td className={`p-2 border border-emerald-200 text-center font-black text-lg ${revenue > 0 ? 'text-emerald-700' : revenue < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                      <td className={`p-1 md:p-2 border border-emerald-200 text-center font-black text-sm md:text-lg ${revenue > 0 ? 'text-emerald-700' : revenue < 0 ? 'text-red-600' : 'text-gray-400'}`}>
                         {hasData ? revenue.toLocaleString('vi-VN') : '-'}
                       </td>
 
                       {/* Action */}
-                      <td className="p-2 border border-gray-200 text-center">
+                      <td className="p-1 md:p-2 border border-gray-200 text-center">
                         {day.isEdited && !day.isSaving && (
                           <button 
                             onClick={() => saveRow(index)}
-                            className="bg-amber-400 hover:bg-amber-500 text-amber-950 p-2 rounded-lg font-bold shadow transition-all active:scale-95"
+                            className="bg-amber-400 hover:bg-amber-500 text-amber-950 p-1 md:p-2 rounded-lg font-bold shadow transition-all active:scale-95 inline-flex justify-center w-full md:w-auto"
                             title="Lưu dòng này"
                           >
-                            <Save className="w-5 h-5" />
+                            <Save className="w-4 h-4 md:w-5 md:h-5" />
                           </button>
                         )}
                         {day.isSaving && (
-                          <div className="p-2 flex justify-center">
-                            <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                          <div className="p-1 md:p-2 flex justify-center">
+                            <Loader2 className="w-4 h-4 md:w-5 md:h-5 text-blue-500 animate-spin" />
                           </div>
                         )}
                         {day.saveSuccess && !day.isEdited && (
-                          <div className="p-2 flex justify-center">
-                            <Check className="w-5 h-5 text-green-600" />
+                          <div className="p-1 md:p-2 flex justify-center">
+                            <Check className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
                           </div>
                         )}
                       </td>
