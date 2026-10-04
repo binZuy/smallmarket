@@ -70,3 +70,46 @@ enum TransactionType {
   INCOME
   EXPENSE
 }
+
+model Employee {
+  id          String            @id @default(cuid())
+  name        String
+  phone       String?
+  hourlyRate  Float             @default(25000)
+  active      Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  shifts      ShiftAssignment[]
+
+  @@map("employees")
+}
+
+model ShiftAssignment {
+  id           String      @id @default(cuid())
+  employeeId   String
+  employee     Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date         String      // Format: YYYY-MM-DD
+  shiftType    ShiftType   @default(MORNING)
+  startTime    String      @default("07:00")
+  endTime      String      @default("12:30")
+  actualHours  Float       @default(5.5)
+  status       ShiftStatus @default(SCHEDULED)
+  notes        String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@map("shift_assignments")
+}
+
+enum ShiftType {
+  MORNING
+  AFTERNOON
+  CUSTOM
+}
+
+enum ShiftStatus {
+  SCHEDULED
+  COMPLETED
+  ABSENT
+}
+

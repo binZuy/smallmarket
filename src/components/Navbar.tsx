@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingCart, BarChart3, PlusCircle, Store, Banknote } from 'lucide-react';
+import { ShoppingCart, BarChart3, PlusCircle, Store, Banknote, Calendar } from 'lucide-react';
 
 interface NavbarProps {
   onOpenAddSidebar?: () => void;
@@ -52,6 +52,18 @@ export default function Navbar({ onOpenAddSidebar }: NavbarProps) {
             </Link>
 
             <Link
+              href="/shifts"
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                pathname === '/shifts'
+                  ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-xs'
+                  : 'text-rose-100/80 hover:bg-[#3d252e]'
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Xếp Ca</span>
+            </Link>
+
+            <Link
               href="/finance"
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                 pathname === '/finance'
@@ -62,6 +74,7 @@ export default function Navbar({ onOpenAddSidebar }: NavbarProps) {
               <Banknote className="w-3.5 h-3.5" />
               <span>Sổ Quỹ</span>
             </Link>
+
 
             {onOpenAddSidebar && (
               <button

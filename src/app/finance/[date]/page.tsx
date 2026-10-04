@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import FinancePasswordGuard from '@/components/FinancePasswordGuard';
 
 interface Transaction {
   id: string;
@@ -133,126 +134,128 @@ export default function FinanceDailyDetail({ params }: { params: Promise<{ date:
   const realCashRevenue = cashNow - cashPrev;
 
   return (
-    <div className="min-h-screen bg-[#F0FDF4] font-sans text-gray-900 pb-12">
-      <Navbar />
-      <div className="max-w-4xl mx-auto space-y-6 mt-4 p-4 md:p-8 pt-0">
-        
-        {/* Header */}
-        <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <Link href="/finance" className="p-1.5 sm:p-2 bg-white rounded-full shadow-sm hover:bg-green-50 transition-colors">
-            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-green-700" />
-          </Link>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-green-800">
-            Chi tiết ngày: {format(new Date(date), 'dd/MM/yyyy')}
-          </h1>
-        </div>
-
-        {/* Top Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-blue-200">
-            <h2 className="text-xl font-bold text-blue-800 mb-4 border-b pb-2">Doanh thu TỔNG</h2>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center text-lg">
-                <span className="text-gray-600">Tiền mặt trong két:</span>
-                <span className="font-bold">{formatCurrency(cashNow)}</span>
-              </div>
-              <div className="flex justify-between items-center text-lg">
-                <span className="text-gray-600">Tiền mặt hôm trước:</span>
-                <span className="font-bold text-gray-400">- {formatCurrency(cashPrev)}</span>
-              </div>
-              <div className="flex justify-between items-center text-base sm:text-lg border-t pt-2 border-dashed">
-                <span className="font-bold text-blue-900">Thực thu Tiền mặt:</span>
-                <span className="font-black text-blue-600">{formatCurrency(realCashRevenue)}</span>
-              </div>
-              <div className="flex justify-between items-center text-base sm:text-lg pt-2">
-                <span className="font-bold text-blue-900">Chuyển khoản:</span>
-                <span className="font-black text-blue-600">{formatCurrency(transfer)}</span>
-              </div>
-            </div>
+    <FinancePasswordGuard>
+      <div className="min-h-screen bg-[#F0FDF4] font-sans text-gray-900 pb-12">
+        <Navbar />
+        <div className="max-w-4xl mx-auto space-y-6 mt-4 p-4 md:p-8 pt-0">
+          
+          {/* Header */}
+          <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <Link href="/finance" className="p-1.5 sm:p-2 bg-white rounded-full shadow-sm hover:bg-green-50 transition-colors">
+              <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-green-700" />
+            </Link>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-green-800">
+              Chi tiết ngày: {format(new Date(date), 'dd/MM/yyyy')}
+            </h1>
           </div>
 
-          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border-2 border-orange-200">
-            <h2 className="text-lg sm:text-xl font-bold text-orange-800 mb-4 border-b pb-2">Tổng Chi ra</h2>
-            <div className="flex h-full items-center justify-center -mt-4 sm:-mt-6">
-              <span className="text-3xl sm:text-4xl font-black text-red-600">
-                - {formatCurrency(totalExpense)}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Detailed Expenses Entry */}
-        <div className="bg-white rounded-2xl shadow-sm border-2 border-red-200 overflow-hidden">
-          <div className="p-4 bg-red-50 border-b border-red-200">
-            <h2 className="text-xl font-bold text-red-800">Chi tiết các khoản CHI (Tiền nhập hàng, đá...)</h2>
-            <p className="text-sm text-red-600 mt-1">
-              Ghi chú cụ thể các khoản chi lẻ ra ở đây để sau này đối soát lợi nhuận kho.
-            </p>
-          </div>
-
-          <div className="p-4">
-            {/* Add new expense form */}
-            <form onSubmit={handleAddExpense} className="flex flex-col sm:flex-row gap-3 mb-6 bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200">
-              <div className="flex-1">
-                <input 
-                  type="text" 
-                  value={newExpenseNotes}
-                  onChange={(e) => setNewExpenseNotes(e.target.value)}
-                  placeholder="Ghi chú (VD: Mua 1 thùng dưa...)"
-                  className="w-full border border-gray-300 rounded-lg p-2.5 sm:p-3 text-base sm:text-lg outline-none focus:border-red-400 focus:ring-1 focus:ring-red-200"
-                  required
-                />
-              </div>
-              <div className="w-full sm:w-48">
-                <input 
-                  type="number" 
-                  value={newExpenseAmount}
-                  onChange={(e) => setNewExpenseAmount(e.target.value)}
-                  placeholder="Số tiền"
-                  className="w-full border border-gray-300 rounded-lg p-2.5 sm:p-3 text-base sm:text-lg outline-none focus:border-red-400 focus:ring-1 focus:ring-red-200 font-bold text-red-600"
-                  required
-                />
-              </div>
-              <button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:bg-gray-400 text-sm sm:text-base w-full sm:w-auto"
-              >
-                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                Thêm
-              </button>
-            </form>
-
-            {/* Expenses List */}
-            {isLoading ? (
-              <div className="text-center p-4 text-gray-500">Đang tải...</div>
-            ) : detailedExpenses.length === 0 ? (
-              <div className="text-center p-8 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 font-medium">
-                Chưa có khoản chi tiết nào được ghi chú trong ngày này.
-              </div>
-            ) : (
+          {/* Top Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-blue-200">
+              <h2 className="text-xl font-bold text-blue-800 mb-4 border-b pb-2">Doanh thu TỔNG</h2>
               <div className="space-y-3">
-                {detailedExpenses.map(tx => (
-                  <div key={tx.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow">
-                    <div className="font-medium text-lg text-gray-800">{tx.notes}</div>
-                    <div className="flex items-center gap-4">
-                      <span className="font-bold text-red-600 text-xl">- {formatCurrency(tx.amount)}</span>
-                      <button 
-                        onClick={() => handleDelete(tx.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Xóa"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                <div className="flex justify-between items-center text-lg">
+                  <span className="text-gray-600">Tiền mặt trong két:</span>
+                  <span className="font-bold">{formatCurrency(cashNow)}</span>
+                </div>
+                <div className="flex justify-between items-center text-lg">
+                  <span className="text-gray-600">Tiền mặt hôm trước:</span>
+                  <span className="font-bold text-gray-400">- {formatCurrency(cashPrev)}</span>
+                </div>
+                <div className="flex justify-between items-center text-base sm:text-lg border-t pt-2 border-dashed">
+                  <span className="font-bold text-blue-900">Thực thu Tiền mặt:</span>
+                  <span className="font-black text-blue-600">{formatCurrency(realCashRevenue)}</span>
+                </div>
+                <div className="flex justify-between items-center text-base sm:text-lg pt-2">
+                  <span className="font-bold text-blue-900">Chuyển khoản:</span>
+                  <span className="font-black text-blue-600">{formatCurrency(transfer)}</span>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
+            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border-2 border-orange-200">
+              <h2 className="text-lg sm:text-xl font-bold text-orange-800 mb-4 border-b pb-2">Tổng Chi ra</h2>
+              <div className="flex h-full items-center justify-center -mt-4 sm:-mt-6">
+                <span className="text-3xl sm:text-4xl font-black text-red-600">
+                  - {formatCurrency(totalExpense)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Detailed Expenses Entry */}
+          <div className="bg-white rounded-2xl shadow-sm border-2 border-red-200 overflow-hidden">
+            <div className="p-4 bg-red-50 border-b border-red-200">
+              <h2 className="text-xl font-bold text-red-800">Chi tiết các khoản CHI (Tiền nhập hàng, đá...)</h2>
+              <p className="text-sm text-red-600 mt-1">
+                Ghi chú cụ thể các khoản chi lẻ ra ở đây để sau này đối soát lợi nhuận kho.
+              </p>
+            </div>
+
+            <div className="p-4">
+              {/* Add new expense form */}
+              <form onSubmit={handleAddExpense} className="flex flex-col sm:flex-row gap-3 mb-6 bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200">
+                <div className="flex-1">
+                  <input 
+                    type="text" 
+                    value={newExpenseNotes}
+                    onChange={(e) => setNewExpenseNotes(e.target.value)}
+                    placeholder="Ghi chú (VD: Mua 1 thùng dưa...)"
+                    className="w-full border border-gray-300 rounded-lg p-2.5 sm:p-3 text-base sm:text-lg outline-none focus:border-red-400 focus:ring-1 focus:ring-red-200"
+                    required
+                  />
+                </div>
+                <div className="w-full sm:w-48">
+                  <input 
+                    type="number" 
+                    value={newExpenseAmount}
+                    onChange={(e) => setNewExpenseAmount(e.target.value)}
+                    placeholder="Số tiền"
+                    className="w-full border border-gray-300 rounded-lg p-2.5 sm:p-3 text-base sm:text-lg outline-none focus:border-red-400 focus:ring-1 focus:ring-red-200 font-bold text-red-600"
+                    required
+                  />
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:bg-gray-400 text-sm sm:text-base w-full sm:w-auto"
+                >
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                  Thêm
+                </button>
+              </form>
+
+              {/* Expenses List */}
+              {isLoading ? (
+                <div className="text-center p-4 text-gray-500">Đang tải...</div>
+              ) : detailedExpenses.length === 0 ? (
+                <div className="text-center p-8 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 font-medium">
+                  Chưa có khoản chi tiết nào được ghi chú trong ngày này.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {detailedExpenses.map(tx => (
+                    <div key={tx.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow">
+                      <div className="font-medium text-lg text-gray-800">{tx.notes}</div>
+                      <div className="flex items-center gap-4">
+                        <span className="font-bold text-red-600 text-xl">- {formatCurrency(tx.amount)}</span>
+                        <button 
+                          onClick={() => handleDelete(tx.id)}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Xóa"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
       </div>
-    </div>
+    </FinancePasswordGuard>
   );
 }
