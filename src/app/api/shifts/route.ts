@@ -51,10 +51,19 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { employeeId, date, shiftType, startTime, endTime, actualHours, status, notes } = body;
+    const { employeeId, date, shiftType, startTime, endTime, actualHours, hourlyRate, status, notes } = body;
 
     if (!employeeId || !date) {
       return NextResponse.json({ error: 'Mã nhân viên và ngày xếp ca là bắt buộc' }, { status: 400 });
+    }
+
+    // Fetch employee to get default hourlyRate if not specified
+    let rateToUse = hourlyRate !== undefined && hourlyRate !== null ? Number(hourlyRate) : undefined;
+    if (rateToUse === undefined) {
+      const emp = await prisma.employee.findUnique({ where: { id: employeeId } });
+      if (emp) {
+        rateToUse = emp.hourlyRate;
+      }
     }
 
     // Determine default times and hours based on shiftType if not provided
@@ -85,6 +94,7 @@ export async function POST(req: Request) {
         startTime: sStart,
         endTime: sEnd,
         actualHours: Number(sHours),
+        hourlyRate: rateToUse,
         status: status || ShiftStatus.SCHEDULED,
         notes: notes ? notes.trim() : null,
       },

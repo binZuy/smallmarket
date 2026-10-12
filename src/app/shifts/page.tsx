@@ -40,6 +40,7 @@ interface ShiftAssignment {
   startTime: string;
   endTime: string;
   actualHours: number;
+  hourlyRate?: number | null;
   status: 'SCHEDULED' | 'COMPLETED' | 'ABSENT';
   notes?: string | null;
   employee: Employee;
@@ -54,6 +55,19 @@ export default function ShiftSchedulePage() {
   const [shifts, setShifts] = useState<ShiftAssignment[]>([]);
   const [monthShifts, setMonthShifts] = useState<ShiftAssignment[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+
+  // Master Template state (0 = Mon, ..., 6 = Sun)
+  const [showTemplateBuilder, setShowTemplateBuilder] = useState<boolean>(false);
+  const [templateConfig, setTemplateConfig] = useState<Record<number, { MORNING: string[]; AFTERNOON: string[] }>>({
+    0: { MORNING: [], AFTERNOON: [] },
+    1: { MORNING: [], AFTERNOON: [] },
+    2: { MORNING: [], AFTERNOON: [] },
+    3: { MORNING: [], AFTERNOON: [] },
+    4: { MORNING: [], AFTERNOON: [] },
+    5: { MORNING: [], AFTERNOON: [] },
+    6: { MORNING: [], AFTERNOON: [] },
+  });
 
   // Modal states
   const [showEmployeeModal, setShowEmployeeModal] = useState<boolean>(false);
@@ -70,8 +84,10 @@ export default function ShiftSchedulePage() {
   const [shiftStartTime, setShiftStartTime] = useState('07:00');
   const [shiftEndTime, setShiftEndTime] = useState('12:30');
   const [shiftActualHours, setShiftActualHours] = useState('5.5');
+  const [shiftRateOverride, setShiftRateOverride] = useState('');
   const [shiftStatus, setShiftStatus] = useState<'SCHEDULED' | 'COMPLETED' | 'ABSENT'>('SCHEDULED');
   const [shiftNotes, setShiftNotes] = useState('');
+  const [applyToFutureWeeks, setApplyToFutureWeeks] = useState(false);
 
   // Quick Inline Edit Hours State
   const [editingShiftHoursId, setEditingShiftHoursId] = useState<string | null>(null);
@@ -225,10 +241,68 @@ export default function ShiftSchedulePage() {
     setEditingEmployee(null);
   };
 
+  // Helper to get effective hourly rate of a shift (defaults to employee current rate if null)
+  const getShiftRate = (shift: ShiftAssignment): number => {
+    if (shift.hourlyRate !== undefined && shift.hourlyRate !== null) {
+      return shift.hourlyRate;
+    }
+    return shift.employee?.hourlyRate ?? 25000;
+  };
+
+  // Sync current week roster to future weeks
+  const handleSyncCurrentWeekToFuture = async () => {
+    const sourceStartStr = format(weekStart, 'yyyy-MM-dd');
+    const targetMondays: string[] = [];
+    let nextMon = addWeeks(weekStart, 1);
+
+    // Add remaining weeks in current month and next 3 weeks
+    for (let i = 0; i < 4; i++) {
+      targetMondays.push(format(nextMon, 'yyyy-MM-dd'));
+      nextMon = addWeeks(nextMon, 1);
+    }
+
+    if (
+      !confirm(
+        `🚀 ĐỒNG BỘ LỊCH TỰ ĐỘNG:\n\nBạn có muốn sao chép phân ca của tuần hiện tại (${format(
+          weekStart,
+          'dd/MM'
+        )} - ${format(weekEnd, 'dd/MM')}) cho 4 tuần tiếp theo không?\n\n(Lịch phân ca dự kiến của các tuần sau sẽ tự động cập nhật giống tuần này).`
+      )
+    ) {
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/shifts/copy-week', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceStartDate: sourceStartStr,
+          targetMondays,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`✅ ${data.message}`);
+        fetchWeekShifts();
+        fetchMonthShifts();
+      } else {
+        alert(`❌ Lỗi: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Error syncing week', error);
+      alert('Lỗi kết nối khi đồng bộ lịch');
+    }
+    setIsSyncing(false);
+  };
+
   // Shift Save / Create / Update
   const handleSaveShift = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!shiftEmpId || !shiftDate) return;
+
+    const rateVal = shiftRateOverride ? Number(shiftRateOverride) : undefined;
 
     try {
       if (editingShift) {
@@ -243,6 +317,7 @@ export default function ShiftSchedulePage() {
             startTime: shiftStartTime,
             endTime: shiftEndTime,
             actualHours: Number(shiftActualHours),
+            hourlyRate: rateVal,
             status: shiftStatus,
             notes: shiftNotes,
           }),
@@ -264,11 +339,36 @@ export default function ShiftSchedulePage() {
             startTime: shiftStartTime,
             endTime: shiftEndTime,
             actualHours: Number(shiftActualHours),
+            hourlyRate: rateVal,
             status: shiftStatus,
             notes: shiftNotes,
           }),
         });
         if (res.ok) {
+          // If checkbox apply to future weeks was checked:
+          if (applyToFutureWeeks) {
+            // Replicate this shift to the same day of week for future weeks in month
+            const currentShiftDate = parseISO(shiftDate);
+            for (let i = 1; i <= 4; i++) {
+              const futureDateStr = format(addWeeks(currentShiftDate, i), 'yyyy-MM-dd');
+              await fetch('/api/shifts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  employeeId: shiftEmpId,
+                  date: futureDateStr,
+                  shiftType,
+                  startTime: shiftStartTime,
+                  endTime: shiftEndTime,
+                  actualHours: Number(shiftActualHours),
+                  hourlyRate: rateVal,
+                  status: 'SCHEDULED',
+                  notes: shiftNotes,
+                }),
+              });
+            }
+          }
+
           fetchWeekShifts();
           fetchMonthShifts();
           closeShiftModal();
@@ -294,11 +394,14 @@ export default function ShiftSchedulePage() {
 
   const openAddShiftModal = (dateStr?: string, defaultShiftType?: 'MORNING' | 'AFTERNOON') => {
     setEditingShift(null);
-    setShiftEmpId(employees.length > 0 ? employees[0].id : '');
+    const selectedEmp = employees.length > 0 ? employees[0] : null;
+    setShiftEmpId(selectedEmp ? selectedEmp.id : '');
     setShiftDate(dateStr || format(new Date(), 'yyyy-MM-dd'));
     handleShiftTypeChange(defaultShiftType || 'MORNING');
+    setShiftRateOverride(selectedEmp ? selectedEmp.hourlyRate.toString() : '25000');
     setShiftStatus('SCHEDULED');
     setShiftNotes('');
+    setApplyToFutureWeeks(false);
     setShowShiftModal(true);
   };
 
@@ -310,8 +413,10 @@ export default function ShiftSchedulePage() {
     setShiftStartTime(shift.startTime);
     setShiftEndTime(shift.endTime);
     setShiftActualHours(shift.actualHours.toString());
+    setShiftRateOverride(getShiftRate(shift).toString());
     setShiftStatus(shift.status);
     setShiftNotes(shift.notes || '');
+    setApplyToFutureWeeks(false);
     setShowShiftModal(true);
   };
 
@@ -363,15 +468,15 @@ export default function ShiftSchedulePage() {
     const payrollData = employees.map((emp) => {
       const empShifts = monthShifts.filter((s) => s.employeeId === emp.id && s.status !== 'ABSENT');
       const totalHours = empShifts.reduce((sum, s) => sum + s.actualHours, 0);
-      const totalSalary = totalHours * emp.hourlyRate;
+      const totalSalary = empShifts.reduce((sum, s) => sum + s.actualHours * getShiftRate(s), 0);
       return {
         'Mã NV': emp.id,
         'Họ và Tên': emp.name,
         'Số Điện Thoại': emp.phone || 'Chưa có',
-        'Lương / Giờ (đ)': emp.hourlyRate,
+        'Lương Hiện Tại (đ/h)': emp.hourlyRate,
         'Tổng Số Ca Làm': empShifts.length,
         'Tổng Số Giờ Thực Tế': totalHours,
-        'Tổng Lương (VND)': totalSalary,
+        'Tổng Lương Tính Theo Thời Điểm (VND)': totalSalary,
       };
     });
 
@@ -476,10 +581,19 @@ export default function ShiftSchedulePage() {
                 </span>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={handleSyncCurrentWeekToFuture}
+                  disabled={isSyncing}
+                  className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl font-extrabold text-xs sm:text-sm shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                  title="Sao chép lịch phân ca của tuần này cho các tuần tới trong tháng mà không cần xếp lịch lại từng tuần"
+                >
+                  <span>🚀 Đồng Bộ Tuần Này Cho Các Tuần Sau</span>
+                </button>
+
                 <button
                   onClick={() => openAddShiftModal()}
-                  className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95"
+                  className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-extrabold text-xs sm:text-sm shadow-sm transition-all active:scale-95"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Xếp Ca Mới</span>
@@ -805,12 +919,9 @@ export default function ShiftSchedulePage() {
                 <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Tổng Quỹ Lương Dự Kiến</div>
                 <div className="text-3xl font-black text-emerald-700">
                   {formatCurrency(
-                    employees.reduce((total, emp) => {
-                      const hours = monthShifts
-                        .filter((s) => s.employeeId === emp.id && s.status !== 'ABSENT')
-                        .reduce((sum, s) => sum + s.actualHours, 0);
-                      return total + hours * emp.hourlyRate;
-                    }, 0)
+                    monthShifts
+                      .filter((s) => s.status !== 'ABSENT')
+                      .reduce((sum, s) => sum + s.actualHours * getShiftRate(s), 0)
                   )}
                 </div>
               </div>
@@ -834,12 +945,12 @@ export default function ShiftSchedulePage() {
                   </h2>
                   <p className="text-xs text-gray-500 font-medium mt-0.5">
                     {currentMonthStr < format(new Date(), 'yyyy-MM')
-                      ? 'Dữ liệu chấm công và giờ làm thực tế của nhân viên đã hoàn thành trong quá khứ.'
+                      ? 'Dữ liệu chấm công và giờ làm thực tế của nhân viên được bảo lưu nguyên vẹn đơn giá theo thời điểm.'
                       : 'Lịch phân ca làm việc dự kiến và dự toán quỹ lương cho tháng này.'}
                   </p>
                 </div>
-                <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
-                  Đơn giá: 25.000 đ/h
+                <span className="text-xs font-extrabold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
+                  🛡️ Bảo lưu lịch sử đơn giá theo thời điểm
                 </span>
               </div>
 
@@ -850,7 +961,7 @@ export default function ShiftSchedulePage() {
                       <th className="p-3.5 text-center">STT</th>
                       <th className="p-3.5">Họ và Tên Nhân Viên</th>
                       <th className="p-3.5">Số Điện Thoại</th>
-                      <th className="p-3.5 text-center">Lương / Giờ</th>
+                      <th className="p-3.5 text-center">Đơn Giá Lương/Giờ</th>
                       <th className="p-3.5 text-center">Tổng Số Ca Làm</th>
                       <th className="p-3.5 text-center">Tổng Số Giờ Làm</th>
                       <th className="p-3.5 text-right">Tổng Lương Dự Kiến</th>
@@ -867,7 +978,15 @@ export default function ShiftSchedulePage() {
                       employees.map((emp, index) => {
                         const empShifts = monthShifts.filter((s) => s.employeeId === emp.id && s.status !== 'ABSENT');
                         const totalHours = empShifts.reduce((sum, s) => sum + s.actualHours, 0);
-                        const totalSalary = totalHours * emp.hourlyRate;
+                        const totalSalary = empShifts.reduce((sum, s) => sum + s.actualHours * getShiftRate(s), 0);
+
+                        const ratesSet = Array.from(new Set(empShifts.map((s) => getShiftRate(s))));
+                        const displayRateStr =
+                          ratesSet.length === 0
+                            ? `${emp.hourlyRate.toLocaleString('vi-VN')} đ/h`
+                            : ratesSet.length === 1
+                            ? `${ratesSet[0].toLocaleString('vi-VN')} đ/h`
+                            : `${ratesSet.map((r) => r.toLocaleString('vi-VN')).join(' / ')} đ/h`;
 
                         return (
                           <tr key={emp.id} className="border-b border-gray-200 hover:bg-emerald-50/20 transition-colors">
@@ -875,7 +994,9 @@ export default function ShiftSchedulePage() {
                             <td className="p-3.5 font-bold text-gray-900">{emp.name}</td>
                             <td className="p-3.5 text-gray-600 font-medium">{emp.phone || '-'}</td>
                             <td className="p-3.5 text-center font-bold text-amber-700">
-                              {emp.hourlyRate.toLocaleString('vi-VN')} đ/h
+                              <span className="bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
+                                {displayRateStr}
+                              </span>
                             </td>
                             <td className="p-3.5 text-center font-bold text-blue-700">
                               {empShifts.length} ca
@@ -1178,6 +1299,23 @@ export default function ShiftSchedulePage() {
                 </div>
               </div>
 
+              {/* Hourly Rate Override */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  Mức Lương / Giờ Ca Này (VNĐ)
+                </label>
+                <input
+                  type="number"
+                  value={shiftRateOverride}
+                  onChange={(e) => setShiftRateOverride(e.target.value)}
+                  placeholder="25000"
+                  className="w-full border border-gray-300 rounded-xl p-3 text-sm font-bold text-amber-800 bg-amber-50/50 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <span className="text-[11px] text-gray-500 mt-1 block">
+                  Mặc định theo thông tin nhân viên. Khi thay đổi ở đây, ca này sẽ lưu đơn giá riêng mà không ảnh hưởng tháng khác.
+                </span>
+              </div>
+
               {/* Shift Status */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
@@ -1207,6 +1345,21 @@ export default function ShiftSchedulePage() {
                   className="w-full border border-gray-300 rounded-xl p-2.5 text-sm"
                 />
               </div>
+
+              {!editingShift && (
+                <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-200 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="applyFuture"
+                    checked={applyToFutureWeeks}
+                    onChange={(e) => setApplyToFutureWeeks(e.target.checked)}
+                    className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
+                  />
+                  <label htmlFor="applyFuture" className="text-xs font-bold text-emerald-950 cursor-pointer">
+                    🚀 Tự động lặp lại ca này vào cùng thứ của các tuần tiếp theo trong tháng
+                  </label>
+                </div>
+              )}
 
               <div className="flex justify-between items-center pt-4 border-t">
                 {editingShift ? (

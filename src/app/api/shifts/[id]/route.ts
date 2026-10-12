@@ -5,7 +5,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   try {
     const { id } = await params;
     const body = await req.json();
-    const { shiftType, startTime, endTime, actualHours, status, notes, employeeId, date } = body;
+    const { shiftType, startTime, endTime, actualHours, hourlyRate, status, notes, employeeId, date } = body;
 
     const updated = await prisma.shiftAssignment.update({
       where: { id },
@@ -16,6 +16,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         ...(startTime !== undefined && { startTime }),
         ...(endTime !== undefined && { endTime }),
         ...(actualHours !== undefined && { actualHours: Number(actualHours) }),
+        ...(hourlyRate !== undefined && { hourlyRate: hourlyRate === null ? null : Number(hourlyRate) }),
         ...(status !== undefined && { status }),
         ...(notes !== undefined && { notes: notes ? notes.trim() : null }),
       },

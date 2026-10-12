@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Lock, KeyRound, ShieldAlert, LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Lock, KeyRound, ShieldAlert, LogOut, ArrowLeft } from 'lucide-react';
 
 interface FinancePasswordGuardProps {
   children: React.ReactNode;
 }
 
 export default function FinancePasswordGuard({ children }: FinancePasswordGuardProps) {
+  const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [passwordInput, setPasswordInput] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -39,6 +41,14 @@ export default function FinancePasswordGuard({ children }: FinancePasswordGuardP
     setIsAuthenticated(false);
   };
 
+  const handleGoBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/');
+    }
+  };
+
   if (isAuthenticated === null) {
     // Loading check state
     return (
@@ -50,8 +60,18 @@ export default function FinancePasswordGuard({ children }: FinancePasswordGuardP
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative">
+        {/* Top-left Floating Back Button */}
+        <button
+          onClick={handleGoBack}
+          className="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-2 px-4 py-2 bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 rounded-full shadow-lg text-xs font-bold transition-all active:scale-95 z-10"
+          title="Quay lại trang trước"
+        >
+          <ArrowLeft className="w-4 h-4 text-rose-400" />
+          <span>Quay lại</span>
+        </button>
+
+        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden mt-8 sm:mt-0">
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -92,12 +112,23 @@ export default function FinancePasswordGuard({ children }: FinancePasswordGuardP
               </div>
             )}
 
-            <button
-              type="submit"
-              className="w-full py-3.5 px-4 bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-bold rounded-xl shadow-lg shadow-rose-500/25 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              <span>Xác Nhận Truy Cập</span>
-            </button>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleGoBack}
+                className="flex-1 py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 border border-slate-700"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Quay lại</span>
+              </button>
+
+              <button
+                type="submit"
+                className="flex-1 py-3 px-4 bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-bold rounded-xl shadow-lg shadow-rose-500/25 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm"
+              >
+                <span>Xác Nhận</span>
+              </button>
+            </div>
           </form>
 
           <div className="mt-6 pt-4 border-t border-slate-800/80 text-center">

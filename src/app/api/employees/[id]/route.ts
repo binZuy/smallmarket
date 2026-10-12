@@ -5,17 +5,34 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   try {
     const { id } = await params;
     const body = await req.json();
-    const { name, phone, hourlyRate, active } = body;
+    const { name, phone, hourlyRate, active, updateFutureShifts = true, effectiveDate } = body;
+
+    const newHourlyRate = hourlyRate !== undefined ? Number(hourlyRate) : undefined;
 
     const updated = await prisma.employee.update({
       where: { id },
       data: {
         ...(name !== undefined && { name: name.trim() }),
         ...(phone !== undefined && { phone: phone ? phone.trim() : null }),
-        ...(hourlyRate !== undefined && { hourlyRate: Number(hourlyRate) }),
+        ...(newHourlyRate !== undefined && { hourlyRate: newHourlyRate }),
         ...(active !== undefined && { active: Boolean(active) }),
       },
     });
+
+    // If hourly rate was updated and updateFutureShifts is true:
+    // Update scheduled/future shifts starting from effectiveDate or today
+    if (newHourlyRate !== undefined && updateFutureShifts) {
+      const startDateStr = effectiveDate || new Date().toISOString().split('T')[0];
+      await prisma.shiftAssignment.updateMany({
+        where: {
+          employeeId: id,
+          date: { gte: startDateStr },
+        },
+        data: {
+          hourlyRate: newHourlyRate,
+        },
+      });
+    }
 
     return NextResponse.json(updated);
   } catch (error) {

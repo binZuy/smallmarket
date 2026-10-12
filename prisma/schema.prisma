@@ -93,6 +93,7 @@ model ShiftAssignment {
   startTime    String      @default("07:00")
   endTime      String      @default("12:30")
   actualHours  Float       @default(5.5)
+  hourlyRate   Float?      // Snapshot mức lương/giờ tại thời điểm phân ca
   status       ShiftStatus @default(SCHEDULED)
   notes        String?
   createdAt    DateTime    @default(now())
