@@ -33,6 +33,7 @@ export default function ProductSidebar({
   const [name, setName] = useState('');
   const [sellingPrice, setSellingPrice] = useState('');
   const [costPrice, setCostPrice] = useState('');
+  const [stockQuantity, setStockQuantity] = useState('10');
   const [unit, setUnit] = useState('cái');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -86,6 +87,7 @@ export default function ProductSidebar({
           name: name.trim(),
           costPrice: Number(costPrice) || 0,
           sellingPrice: Number(sellingPrice) || 0,
+          stockQuantity: Number(stockQuantity) || 0,
           unit: unit || 'cái',
         }),
       });
@@ -98,6 +100,7 @@ export default function ProductSidebar({
       setName('');
       setSellingPrice('');
       setCostPrice('');
+      setStockQuantity('10');
       setUnit('cái');
       await loadSidebarProducts();
       onProductAdded();
@@ -235,6 +238,20 @@ export default function ProductSidebar({
                   className="w-full px-2.5 py-1.5 bg-rose-50/30 border border-rose-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-rose-300 text-slate-600 font-medium"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 mb-0.5">
+                Số lượng tồn kho ban đầu
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={stockQuantity}
+                onChange={(e) => setStockQuantity(e.target.value)}
+                placeholder="10"
+                className="w-full px-2.5 py-1.5 bg-rose-50/50 border border-rose-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-rose-300 font-bold text-rose-600"
+              />
             </div>
 
             <button

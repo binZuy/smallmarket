@@ -23,6 +23,8 @@ interface Product {
   costPrice: number;
   sellingPrice: number;
   unit: string;
+  stockQuantity: number;
+  minStockLevel: number;
 }
 
 interface CartItem extends Product {
@@ -253,6 +255,20 @@ export default function POSPage() {
                       <span className="text-xs font-black text-rose-500 shrink-0">
                         {p.sellingPrice > 0 ? formatVND(p.sellingPrice) : 'Chưa giá'}
                       </span>
+
+                      {p.stockQuantity !== undefined && (
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0 ${
+                            p.stockQuantity <= 0
+                              ? 'bg-rose-100 text-rose-700 font-extrabold'
+                              : p.stockQuantity <= (p.minStockLevel || 5)
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-rose-50 text-slate-500'
+                          }`}
+                        >
+                          {p.stockQuantity <= 0 ? 'Hết hàng' : `Còn ${p.stockQuantity}`}
+                        </span>
+                      )}
                     </div>
                   </div>
 

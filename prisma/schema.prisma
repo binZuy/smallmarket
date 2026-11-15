@@ -6,21 +6,24 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Product {
-  id           String      @id @default(cuid())
-  name         String
-  costPrice    Float       // Giá nhập hàng (VNĐ)
-  sellingPrice Float       // Giá bán ra (VNĐ)
-  unit         String      @default("cái")
-  isAvailable  Boolean     @default(true)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  orderItems   OrderItem[]
+  id                    String                 @id @default(cuid())
+  name                  String
+  costPrice             Float                  // Giá nhập hàng (VNĐ)
+  sellingPrice          Float                  // Giá bán ra (VNĐ)
+  unit                  String                 @default("cái")
+  stockQuantity         Int                    @default(0) // Số lượng tồn kho hiện tại
+  minStockLevel         Int                    @default(5) // Ngưỡng cảnh báo sắp hết hàng
+  category              String?                // Danh mục sản phẩm (Đồ gia dụng, Bánh kẹo, Nước giải khát...)
+  isAvailable           Boolean                @default(true)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  orderItems            OrderItem[]
+  inventoryTransactions InventoryTransaction[]
 
   @@map("products")
 }
@@ -52,16 +55,41 @@ model OrderItem {
   @@map("order_items")
 }
 
+model InventoryTransaction {
+  id            String        @id @default(cuid())
+  type          InventoryType // IMPORT (Nhập), EXPORT (Xuất), ADJUSTMENT (Điều chỉnh), DAMAGE (Hư hại/Hết hạn)
+  productId     String?
+  productName   String
+  quantity      Int           // Số lượng xuất / nhập
+  unitPrice     Float         @default(0) // Đơn giá
+  totalAmount   Float         @default(0) // Thành tiền
+  supplier      String?       // Nhà cung cấp / Nguồn nhập
+  referenceCode String?       // Mã phiếu (VD: PN-20261115-01)
+  notes         String?       // Ghi chú
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  product       Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@map("inventory_transactions")
+}
+
+enum InventoryType {
+  IMPORT
+  EXPORT
+  ADJUSTMENT
+  DAMAGE
+}
+
 model Transaction {
-  id          String          @id @default(cuid())
-  date        DateTime        // Ngày của giao dịch
-  type        TransactionType // Thu (INCOME) hoặc Chi (EXPENSE)
-  category    String          // Danh mục (VD: Chuyển khoản, Tiền mặt, Nhập nước, Bánh mì...)
-  amount      Float           // Số tiền
-  quantity    Int?            // Số lượng (VD: bao nhiêu thùng, bao nhiêu cái) - Thường dùng cho Chi
-  notes       String?         // Ghi chú thêm
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id        String          @id @default(cuid())
+  date      DateTime        // Ngày của giao dịch
+  type      TransactionType // Thu (INCOME) hoặc Chi (EXPENSE)
+  category  String          // Danh mục (VD: Chuyển khoản, Tiền mặt, Nhập hàng, Bánh mì...)
+  amount    Float           // Số tiền
+  quantity  Int?            // Số lượng (VD: bao nhiêu thùng, bao nhiêu cái)
+  notes     String?         // Ghi chú thêm
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 
   @@map("transactions")
 }
@@ -72,32 +100,32 @@ enum TransactionType {
 }
 
 model Employee {
-  id          String            @id @default(cuid())
-  name        String
-  phone       String?
-  hourlyRate  Float             @default(25000)
-  active      Boolean           @default(true)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  shifts      ShiftAssignment[]
+  id         String            @id @default(cuid())
+  name       String
+  phone      String?
+  hourlyRate Float             @default(25000)
+  active     Boolean           @default(true)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  shifts     ShiftAssignment[]
 
   @@map("employees")
 }
 
 model ShiftAssignment {
-  id           String      @id @default(cuid())
-  employeeId   String
-  employee     Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  date         String      // Format: YYYY-MM-DD
-  shiftType    ShiftType   @default(MORNING)
-  startTime    String      @default("07:00")
-  endTime      String      @default("12:30")
-  actualHours  Float       @default(5.5)
-  hourlyRate   Float?      // Snapshot mức lương/giờ tại thời điểm phân ca
-  status       ShiftStatus @default(SCHEDULED)
-  notes        String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id          String      @id @default(cuid())
+  employeeId  String
+  employee    Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date        String      // Format: YYYY-MM-DD
+  shiftType   ShiftType   @default(MORNING)
+  startTime   String      @default("07:00")
+  endTime     String      @default("12:30")
+  actualHours Float       @default(5.5)
+  hourlyRate  Float?      // Snapshot mức lương/giờ tại thời điểm phân ca
+  status      ShiftStatus @default(SCHEDULED)
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   @@map("shift_assignments")
 }
@@ -113,4 +141,3 @@ enum ShiftStatus {
   COMPLETED
   ABSENT
 }
-

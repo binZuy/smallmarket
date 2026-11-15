@@ -64,20 +64,57 @@ export async function POST(request: Request) {
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const orderCode = `HD-${dateStr}-${randomSuffix}`;
 
-    const order = await prisma.order.create({
-      data: {
-        orderCode,
-        totalSellingPrice,
-        totalCostPrice,
-        profit,
-        notes: notes || null,
-        items: {
-          create: formattedItems,
+    const order = await prisma.$transaction(async (tx) => {
+      const newOrder = await tx.order.create({
+        data: {
+          orderCode,
+          totalSellingPrice,
+          totalCostPrice,
+          profit,
+          notes: notes || null,
+          items: {
+            create: formattedItems,
+          },
         },
-      },
-      include: {
-        items: true,
-      },
+        include: {
+          items: true,
+        },
+      });
+
+      // Update inventory and log stock export for tracked products
+      for (const item of formattedItems) {
+        if (item.productId) {
+          // Decrement product stockQuantity
+          await tx.product.update({
+            where: { id: item.productId },
+            data: {
+              stockQuantity: {
+                decrement: item.quantity,
+              },
+            },
+          }).catch((err) => {
+            console.warn(`Could not update stock for product ${item.productId}:`, err.message);
+          });
+
+          // Create inventory transaction record
+          await tx.inventoryTransaction.create({
+            data: {
+              type: 'EXPORT',
+              productId: item.productId,
+              productName: item.productName,
+              quantity: item.quantity,
+              unitPrice: item.sellingPrice,
+              totalAmount: item.sellingPrice * item.quantity,
+              referenceCode: orderCode,
+              notes: `Bán hàng tại quầy - Đơn #${orderCode}`,
+            },
+          }).catch((err) => {
+            console.warn(`Could not log export transaction for product ${item.productId}:`, err.message);
+          });
+        }
+      }
+
+      return newOrder;
     });
 
     return NextResponse.json(order, { status: 201 });

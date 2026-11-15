@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, costPrice, sellingPrice, unit } = body;
+    const { name, costPrice, sellingPrice, unit, stockQuantity, minStockLevel, category } = body;
 
     if (!name || name.trim() === '') {
       return NextResponse.json(
@@ -44,15 +44,37 @@ export async function POST(request: Request) {
       );
     }
 
+    const initialStock = Number(stockQuantity) || 0;
+    const initialCost = Number(costPrice) || 0;
+
     const product = await prisma.product.create({
       data: {
         name: name.trim(),
-        costPrice: Number(costPrice) || 0,
+        costPrice: initialCost,
         sellingPrice: Number(sellingPrice) || 0,
         unit: unit || 'cái',
+        stockQuantity: initialStock,
+        minStockLevel: Number(minStockLevel) || 5,
+        category: category?.trim() || 'Hàng hoá',
         isAvailable: true,
       },
     });
+
+    // If initial stock was provided, record an initial import
+    if (initialStock > 0) {
+      await prisma.inventoryTransaction.create({
+        data: {
+          type: 'IMPORT',
+          productId: product.id,
+          productName: product.name,
+          quantity: initialStock,
+          unitPrice: initialCost,
+          totalAmount: initialStock * initialCost,
+          referenceCode: `PN-INIT-${Date.now().toString().slice(-4)}`,
+          notes: 'Khởi tạo tồn kho ban đầu',
+        },
+      });
+    }
 
     return NextResponse.json(product, { status: 201 });
   } catch (error: any) {

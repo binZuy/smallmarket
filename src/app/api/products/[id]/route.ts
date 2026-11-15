@@ -11,18 +11,43 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, costPrice, sellingPrice, unit, isAvailable } = body;
+    const { name, costPrice, sellingPrice, unit, isAvailable, stockQuantity, minStockLevel, category } = body;
+
+    const existing = await prisma.product.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: 'Sản phẩm không tồn tại' }, { status: 404 });
+    }
 
     const updatedProduct = await prisma.product.update({
       where: { id },
       data: {
-        ...(name !== undefined && { name }),
+        ...(name !== undefined && { name: name.trim() }),
         ...(costPrice !== undefined && { costPrice: Number(costPrice) }),
         ...(sellingPrice !== undefined && { sellingPrice: Number(sellingPrice) }),
         ...(unit !== undefined && { unit }),
         ...(isAvailable !== undefined && { isAvailable }),
+        ...(stockQuantity !== undefined && { stockQuantity: Number(stockQuantity) }),
+        ...(minStockLevel !== undefined && { minStockLevel: Number(minStockLevel) }),
+        ...(category !== undefined && { category }),
       },
     });
+
+    // If stock quantity was explicitly adjusted manually, log an ADJUSTMENT
+    if (stockQuantity !== undefined && Number(stockQuantity) !== existing.stockQuantity) {
+      const diff = Number(stockQuantity) - existing.stockQuantity;
+      await prisma.inventoryTransaction.create({
+        data: {
+          type: 'ADJUSTMENT',
+          productId: id,
+          productName: updatedProduct.name,
+          quantity: Math.abs(diff),
+          unitPrice: updatedProduct.costPrice,
+          totalAmount: Math.abs(diff) * updatedProduct.costPrice,
+          referenceCode: `DC-${Date.now().toString().slice(-4)}`,
+          notes: `Điều chỉnh tồn kho từ ${existing.stockQuantity} thành ${stockQuantity} (${diff > 0 ? '+' : ''}${diff})`,
+        },
+      });
+    }
 
     return NextResponse.json(updatedProduct);
   } catch (error: any) {
