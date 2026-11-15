@@ -20,7 +20,7 @@ import {
   Boxes,
   Edit2,
   X,
-  PlusCircle,
+  Coffee,
   Trash2,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -73,6 +73,7 @@ export default function InventoryPage() {
   // Filter states
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'low' | 'out'>('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [historyTypeFilter, setHistoryTypeFilter] = useState('ALL');
 
   // Quick edit modal
@@ -81,6 +82,8 @@ export default function InventoryPage() {
   const [editCost, setEditCost] = useState<number>(0);
   const [editPrice, setEditPrice] = useState<number>(0);
   const [editMinStock, setEditMinStock] = useState<number>(5);
+  const [editUnit, setEditUnit] = useState<string>('cái');
+  const [editCategory, setEditCategory] = useState<string>('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Import form state
@@ -92,6 +95,7 @@ export default function InventoryPage() {
     Array<{
       productId: string;
       name: string;
+      category?: string;
       quantity: number;
       costPrice: number;
       sellingPrice: number;
@@ -102,6 +106,7 @@ export default function InventoryPage() {
 
   // Export form state
   const [exportType, setExportType] = useState<'DAMAGE' | 'EXPORT' | 'ADJUSTMENT'>('DAMAGE');
+  const [exportReason, setExportReason] = useState<'DAMAGE' | 'USAGE' | 'EXPORT' | 'ADJUSTMENT'>('DAMAGE');
   const [exportProductId, setExportProductId] = useState('');
   const [exportQty, setExportQty] = useState(1);
   const [exportNotes, setExportNotes] = useState('');
@@ -153,6 +158,8 @@ export default function InventoryPage() {
     setEditCost(p.costPrice);
     setEditPrice(p.sellingPrice);
     setEditMinStock(p.minStockLevel || 5);
+    setEditUnit(p.unit || 'cái');
+    setEditCategory(p.category || 'Hàng hoá');
   };
 
   const handleSaveEdit = async () => {
@@ -167,6 +174,8 @@ export default function InventoryPage() {
           costPrice: Number(editCost),
           sellingPrice: Number(editPrice),
           minStockLevel: Number(editMinStock),
+          unit: editUnit,
+          category: editCategory,
         }),
       });
 
@@ -276,6 +285,7 @@ export default function InventoryPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: exportType,
+          reason: exportReason,
           items: [
             {
               productId: exportProductId,
@@ -332,11 +342,15 @@ export default function InventoryPage() {
     XLSX.writeFile(wb, `BaoCao_TonKho_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
+  // Categories list
+  const categoryList = Array.from(new Set(products.map((p) => p.category).filter(Boolean))) as string[];
+
   const filteredProducts = products.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    if (statusFilter === 'out') return matchesSearch && p.stockStatus === 'OUT_OF_STOCK';
-    if (statusFilter === 'low') return matchesSearch && p.stockStatus === 'LOW_STOCK';
-    return matchesSearch;
+    const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
+    if (statusFilter === 'out') return matchesSearch && matchesCategory && p.stockStatus === 'OUT_OF_STOCK';
+    if (statusFilter === 'low') return matchesSearch && matchesCategory && p.stockStatus === 'LOW_STOCK';
+    return matchesSearch && matchesCategory;
   });
 
   const totalImportCalc = importItems.reduce(
@@ -357,7 +371,7 @@ export default function InventoryPage() {
               Quản Lý Xuất Nhập & Kho Hàng
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 font-medium">
-              Theo dõi tồn kho theo thời gian thực, nhập hàng, xuất kho và kiểm soát hao hụt.
+              Theo dõi tồn kho theo thời gian thực, nhập hàng, xuất kho và kiểm soát nguyên vật liệu.
             </p>
           </div>
 
@@ -390,10 +404,10 @@ export default function InventoryPage() {
                 </span>
               </div>
               <div className="mt-1 text-lg sm:text-xl font-black text-[#2d1b22]">
-                {summary.totalStockUnits.toLocaleString('vi-VN')} <span className="text-xs font-bold text-slate-400">món</span>
+                {summary.totalStockUnits.toLocaleString('vi-VN')} <span className="text-xs font-bold text-slate-400">đơn vị</span>
               </div>
               <div className="text-[11px] text-slate-500 font-medium mt-0.5">
-                {summary.totalProducts} mặt hàng đang bán
+                {summary.totalProducts} mặt hàng trong kho
               </div>
             </div>
 
@@ -500,14 +514,14 @@ export default function InventoryPage() {
 
         {/* TAB 1: KHO HÀNG & TỒN KHO */}
         {activeTab === 'stock' && (
-          <div className="bg-white rounded-xl border border-rose-200/60 shadow-xs overflow-hidden">
-            {/* Search & Filters */}
+          <div className="bg-white rounded-xl border border-rose-200/60 shadow-xs overflow-hidden space-y-2">
+            {/* Search & Status Filters */}
             <div className="p-3 border-b border-rose-100 flex flex-col sm:flex-row items-center justify-between gap-2.5">
               <div className="relative w-full sm:w-80">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Tìm kiếm sản phẩm..."
+                  placeholder="Tìm theo tên sản phẩm hoặc nguyên liệu..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-9 pr-3 py-1.5 text-xs bg-rose-50/40 border border-rose-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-400 font-medium"
@@ -548,19 +562,62 @@ export default function InventoryPage() {
               </div>
             </div>
 
+            {/* Category Pills Navigation */}
+            <div className="px-3 pb-2 flex items-center gap-1.5 overflow-x-auto text-xs">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide shrink-0">
+                Danh mục:
+              </span>
+              <button
+                onClick={() => setCategoryFilter('all')}
+                className={`px-2.5 py-1 rounded-lg font-bold whitespace-nowrap transition-all ${
+                  categoryFilter === 'all'
+                    ? 'bg-rose-600 text-white shadow-xs'
+                    : 'bg-rose-50/60 text-slate-600 hover:bg-rose-100'
+                }`}
+              >
+                Tất cả ({products.length})
+              </button>
+              <button
+                onClick={() => setCategoryFilter('Nguyên liệu pha chế')}
+                className={`px-2.5 py-1 rounded-lg font-bold whitespace-nowrap transition-all flex items-center gap-1 ${
+                  categoryFilter === 'Nguyên liệu pha chế'
+                    ? 'bg-emerald-700 text-white shadow-xs'
+                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+                }`}
+              >
+                <Coffee className="w-3 h-3" />
+                <span>Nguyên liệu pha chế</span>
+              </button>
+              {categoryList
+                .filter((c) => c !== 'Nguyên liệu pha chế')
+                .map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setCategoryFilter(cat)}
+                    className={`px-2.5 py-1 rounded-lg font-bold whitespace-nowrap transition-all ${
+                      categoryFilter === cat
+                        ? 'bg-rose-600 text-white shadow-xs'
+                        : 'bg-rose-50/60 text-slate-600 hover:bg-rose-100'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+            </div>
+
             {/* Inventory Table */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto border-t border-rose-100">
               <table className="w-full text-left text-xs">
                 <thead className="bg-rose-50/60 text-slate-700 font-black border-b border-rose-100 uppercase tracking-wider text-[11px]">
                   <tr>
-                    <th className="py-2.5 px-3">Tên Sản Phẩm</th>
+                    <th className="py-2.5 px-3">Tên Hàng / Nguyên Liệu</th>
                     <th className="py-2.5 px-3">Danh Mục</th>
                     <th className="py-2.5 px-3 text-center">Tồn Kho</th>
-                    <th className="py-2.5 px-3 text-right">Giá Vốn</th>
-                    <th className="py-2.5 px-3 text-right">Giá Bán</th>
-                    <th className="py-2.5 px-3 text-right">Tổng Vốn</th>
+                    <th className="py-2.5 px-3 text-right">Giá Vốn Nhập</th>
+                    <th className="py-2.5 px-3 text-right">Giá Bán Ra</th>
+                    <th className="py-2.5 px-3 text-right">Tổng Tiền Vốn</th>
                     <th className="py-2.5 px-3 text-center">Trạng Thái</th>
-                    <th className="py-2.5 px-3 text-center">Thao Tác</th>
+                    <th className="py-2.5 px-3 text-center">Chỉnh Sửa</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-rose-100/70 font-medium">
@@ -570,8 +627,16 @@ export default function InventoryPage() {
                         <div className="font-bold text-[#2d1b22]">{p.name}</div>
                         <div className="text-[10px] text-slate-400">Đơn vị: {p.unit}</div>
                       </td>
-                      <td className="py-2.5 px-3 text-slate-500">
-                        {p.category || 'Gia dụng'}
+                      <td className="py-2.5 px-3">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                            p.category === 'Nguyên liệu pha chế'
+                              ? 'bg-emerald-100 text-emerald-800 font-black'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {p.category || 'Gia dụng'}
+                        </span>
                       </td>
                       <td className="py-2.5 px-3 text-center">
                         <span
@@ -583,7 +648,7 @@ export default function InventoryPage() {
                               : 'text-slate-800'
                           }`}
                         >
-                          {p.stockQuantity}
+                          {p.stockQuantity} <span className="text-[10px] font-bold text-slate-400">{p.unit}</span>
                         </span>
                         <div className="text-[10px] text-slate-400 mt-0.5">
                           Ngưỡng min: {p.minStockLevel || 5}
@@ -593,7 +658,7 @@ export default function InventoryPage() {
                         {formatVND(p.costPrice)}
                       </td>
                       <td className="py-2.5 px-3 text-right text-rose-600 font-bold">
-                        {formatVND(p.sellingPrice)}
+                        {p.sellingPrice > 0 ? formatVND(p.sellingPrice) : 'Nguyên liệu'}
                       </td>
                       <td className="py-2.5 px-3 text-right text-slate-900 font-bold">
                         {formatVND(p.costValue)}
@@ -627,7 +692,7 @@ export default function InventoryPage() {
                   {filteredProducts.length === 0 && (
                     <tr>
                       <td colSpan={8} className="py-8 text-center text-slate-400 text-xs font-semibold">
-                        Không tìm thấy sản phẩm nào phù hợp.
+                        Không tìm thấy mặt hàng hoặc nguyên liệu nào phù hợp.
                       </td>
                     </tr>
                   )}
@@ -643,7 +708,7 @@ export default function InventoryPage() {
             <div className="flex items-center justify-between border-b border-rose-100 pb-2.5">
               <h2 className="font-black text-sm text-[#2d1b22] flex items-center gap-1.5">
                 <ArrowDownToLine className="w-4 h-4 text-rose-500" />
-                Tạo Phiếu Nhập Hàng
+                Tạo Phiếu Nhập Hàng / Nhập Nguyên Liệu
               </h2>
               <div className="text-xs font-bold text-slate-500">
                 Mã phiếu: Tự động sinh (PN-...)
@@ -657,7 +722,7 @@ export default function InventoryPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="VD: Đại lý bánh kẹo Tuấn, Chợ đầu mối..."
+                  placeholder="VD: Đại lý Vũ Gia, NPP Trang Chiến, Đại lý pha chế..."
                   value={importSupplier}
                   onChange={(e) => setImportSupplier(e.target.value)}
                   className="w-full px-3 py-2 text-xs bg-rose-50/40 border border-rose-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-400 font-medium"
@@ -682,7 +747,7 @@ export default function InventoryPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-black text-slate-700 uppercase tracking-wide">
-                  Danh Sách Mặt Hàng Nhập
+                  Danh Sách Mặt Hàng / Nguyên Liệu Nhập
                 </label>
                 <button
                   type="button"
@@ -702,7 +767,7 @@ export default function InventoryPage() {
                   >
                     <div className="sm:col-span-4">
                       <label className="text-[10px] font-bold text-slate-500 block mb-0.5">
-                        Chọn sản phẩm có sẵn:
+                        Chọn hàng có sẵn:
                       </label>
                       <select
                         value={item.productId}
@@ -712,22 +777,35 @@ export default function InventoryPage() {
                         <option value="">-- Hoặc nhập tên mới bên dưới --</option>
                         {products.map((p) => (
                           <option key={p.id} value={p.id}>
-                            {p.name} (Tồn: {p.stockQuantity})
+                            {p.name} (Tồn: {p.stockQuantity} {p.unit})
                           </option>
                         ))}
                       </select>
                       {!item.productId && (
-                        <input
-                          type="text"
-                          placeholder="Nhập tên sản phẩm mới..."
-                          value={item.name}
-                          onChange={(e) => {
-                            const updated = [...importItems];
-                            updated[idx].name = e.target.value;
-                            setImportItems(updated);
-                          }}
-                          className="mt-1 w-full px-2 py-1 text-xs bg-white border border-rose-200 rounded-lg font-medium"
-                        />
+                        <div className="grid grid-cols-2 gap-1 mt-1">
+                          <input
+                            type="text"
+                            placeholder="Nhập tên hàng mới..."
+                            value={item.name}
+                            onChange={(e) => {
+                              const updated = [...importItems];
+                              updated[idx].name = e.target.value;
+                              setImportItems(updated);
+                            }}
+                            className="px-2 py-1 text-xs bg-white border border-rose-200 rounded-lg font-medium"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Đơn vị (kg, chai, lon...)"
+                            value={item.unit}
+                            onChange={(e) => {
+                              const updated = [...importItems];
+                              updated[idx].unit = e.target.value;
+                              setImportItems(updated);
+                            }}
+                            className="px-2 py-1 text-xs bg-white border border-rose-200 rounded-lg font-medium"
+                          />
+                        </div>
                       )}
                     </div>
 
@@ -853,16 +931,16 @@ export default function InventoryPage() {
           </form>
         )}
 
-        {/* TAB 3: XUẤT KHO / HUỶ HÀNG (STOCK OUT) */}
+        {/* TAB 3: XUẤT KHO / HUỶ HÀNG / XUẤT DÙNG (STOCK OUT) */}
         {activeTab === 'export' && (
           <form onSubmit={handleExportSubmit} className="bg-white rounded-xl border border-rose-200/60 p-4 shadow-xs space-y-4 max-w-xl mx-auto">
             <div className="border-b border-rose-100 pb-2.5">
               <h2 className="font-black text-sm text-[#2d1b22] flex items-center gap-1.5">
                 <ArrowUpFromLine className="w-4 h-4 text-rose-500" />
-                Tạo Phiếu Xuất Kho / Xuất Hủy / Kiểm Kê
+                Tạo Phiếu Xuất Kho / Xuất Dùng / Kiểm Kê
               </h2>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Dùng cho xuất huỷ hàng hỏng, hết hạn, xuất dùng nội bộ hoặc cân bằng kiểm kê kho.
+                Xuất dùng pha chế quầy nước, xuất huỷ hàng hỏng, hoặc cân bằng chênh lệch kiểm kê kho.
               </p>
             </div>
 
@@ -870,46 +948,73 @@ export default function InventoryPage() {
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Lý Do / Loại Xuất Kho
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button
                   type="button"
-                  onClick={() => setExportType('DAMAGE')}
-                  className={`py-2 px-2.5 rounded-lg text-xs font-bold border transition-all text-center ${
-                    exportType === 'DAMAGE'
-                      ? 'bg-rose-50 border-rose-400 text-rose-700 font-black'
+                  onClick={() => {
+                    setExportType('EXPORT');
+                    setExportReason('USAGE');
+                    setExportNotes('Xuất dùng pha chế quầy nước (trà sữa, cà phê, trà chanh)');
+                  }}
+                  className={`py-2 px-2 rounded-lg text-xs font-bold border transition-all text-center ${
+                    exportReason === 'USAGE'
+                      ? 'bg-emerald-50 border-emerald-500 text-emerald-800 font-black'
                       : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  ⚠️ Hàng hỏng / hết hạn
+                  🍵 Xuất pha chế
                 </button>
                 <button
                   type="button"
-                  onClick={() => setExportType('EXPORT')}
-                  className={`py-2 px-2.5 rounded-lg text-xs font-bold border transition-all text-center ${
-                    exportType === 'EXPORT'
+                  onClick={() => {
+                    setExportType('DAMAGE');
+                    setExportReason('DAMAGE');
+                    setExportNotes('Hàng hỏng / móp méo / hết hạn sử dụng');
+                  }}
+                  className={`py-2 px-2 rounded-lg text-xs font-bold border transition-all text-center ${
+                    exportReason === 'DAMAGE'
                       ? 'bg-rose-50 border-rose-400 text-rose-700 font-black'
                       : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  📦 Xuất dùng / bán sỉ
+                  ⚠️ Hàng hỏng/hết hạn
                 </button>
                 <button
                   type="button"
-                  onClick={() => setExportType('ADJUSTMENT')}
-                  className={`py-2 px-2.5 rounded-lg text-xs font-bold border transition-all text-center ${
-                    exportType === 'ADJUSTMENT'
-                      ? 'bg-rose-50 border-rose-400 text-rose-700 font-black'
+                  onClick={() => {
+                    setExportType('EXPORT');
+                    setExportReason('EXPORT');
+                    setExportNotes('Xuất dùng nội bộ hoặc bán sỉ ngoài quầy');
+                  }}
+                  className={`py-2 px-2 rounded-lg text-xs font-bold border transition-all text-center ${
+                    exportReason === 'EXPORT'
+                      ? 'bg-blue-50 border-blue-400 text-blue-700 font-black'
                       : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  ⚖️ Điều chỉnh kiểm kê
+                  📦 Xuất dùng/bán sỉ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExportType('ADJUSTMENT');
+                    setExportReason('ADJUSTMENT');
+                    setExportNotes('Cân bằng chênh lệch số lượng sau kiểm kê');
+                  }}
+                  className={`py-2 px-2 rounded-lg text-xs font-bold border transition-all text-center ${
+                    exportReason === 'ADJUSTMENT'
+                      ? 'bg-amber-50 border-amber-400 text-amber-700 font-black'
+                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  ⚖️ Kiểm kê kho
                 </button>
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Chọn Sản Phẩm Cần Xuất
+                Chọn Mặt Hàng / Nguyên Liệu Cần Xuất
               </label>
               <select
                 value={exportProductId}
@@ -917,10 +1022,10 @@ export default function InventoryPage() {
                 className="w-full px-3 py-2 text-xs bg-rose-50/40 border border-rose-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-400 font-semibold"
                 required
               >
-                <option value="">-- Chọn sản phẩm --</option>
+                <option value="">-- Chọn mặt hàng / nguyên liệu --</option>
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} (Tồn hiện tại: {p.stockQuantity} {p.unit})
+                    [{p.category || 'Khác'}] {p.name} (Tồn: {p.stockQuantity} {p.unit})
                   </option>
                 ))}
               </select>
@@ -946,7 +1051,7 @@ export default function InventoryPage() {
               </label>
               <textarea
                 rows={2}
-                placeholder="VD: Quạt bị gãy cánh trong lúc vận chuyển..."
+                placeholder="VD: Xuất 2 túi đường + 1 gói trà đen pha trà sữa..."
                 value={exportNotes}
                 onChange={(e) => setExportNotes(e.target.value)}
                 className="w-full px-3 py-2 text-xs bg-rose-50/40 border border-rose-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-400 font-medium"
@@ -974,7 +1079,7 @@ export default function InventoryPage() {
             <div className="p-3 border-b border-rose-100 flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-black text-sm text-[#2d1b22] flex items-center gap-1.5">
                 <History className="w-4 h-4 text-rose-500" />
-                Nhật Ký Biến Động Kho
+                Nhật Ký Biến Động Kho (Input - Output)
               </h2>
 
               <div className="flex items-center gap-1.5">
@@ -1006,7 +1111,7 @@ export default function InventoryPage() {
                       : 'bg-blue-50 text-blue-700'
                   }`}
                 >
-                  Bán / Xuất
+                  Bán / Xuất dùng
                 </button>
                 <button
                   onClick={() => setHistoryTypeFilter('DAMAGE')}
@@ -1028,9 +1133,9 @@ export default function InventoryPage() {
                     <th className="py-2.5 px-3">Thời Gian</th>
                     <th className="py-2.5 px-3">Mã Phiếu</th>
                     <th className="py-2.5 px-3">Loại</th>
-                    <th className="py-2.5 px-3">Tên Sản Phẩm</th>
+                    <th className="py-2.5 px-3">Tên Sản Phẩm / Nguyên Liệu</th>
                     <th className="py-2.5 px-3 text-center">Số Lượng</th>
-                    <th className="py-2.5 px-3 text-right">Đơn Giá</th>
+                    <th className="py-2.5 px-3 text-right">Đơn Giá Vốn</th>
                     <th className="py-2.5 px-3 text-right">Thành Tiền</th>
                     <th className="py-2.5 px-3">Nguồn / Ghi Chú</th>
                   </tr>
@@ -1051,7 +1156,7 @@ export default function InventoryPage() {
                           </span>
                         ) : tx.type === 'EXPORT' ? (
                           <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800">
-                            - XUẤT BÁN
+                            - XUẤT DÙNG / BÁN
                           </span>
                         ) : tx.type === 'DAMAGE' ? (
                           <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800">
@@ -1111,9 +1216,34 @@ export default function InventoryPage() {
               </div>
 
               <div className="space-y-2.5 text-xs">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Danh mục:
+                    </label>
+                    <input
+                      type="text"
+                      value={editCategory}
+                      onChange={(e) => setEditCategory(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-rose-200 rounded-lg font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Đơn vị tính:
+                    </label>
+                    <input
+                      type="text"
+                      value={editUnit}
+                      onChange={(e) => setEditUnit(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-rose-200 rounded-lg font-bold"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">
-                    Số lượng tồn kho hiện tại:
+                    Số lượng tồn kho thực tế:
                   </label>
                   <input
                     type="number"
@@ -1122,7 +1252,7 @@ export default function InventoryPage() {
                     className="w-full px-3 py-2 border border-rose-200 rounded-lg font-black text-base text-rose-600"
                   />
                   <span className="text-[10px] text-slate-400">
-                    * Nếu thay đổi số lượng, hệ thống sẽ tự động ghi nhật ký kiểm kê.
+                    * Điều chỉnh trực tiếp số lượng tồn kho theo số đếm thực tế của bạn.
                   </span>
                 </div>
 
@@ -1141,7 +1271,7 @@ export default function InventoryPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block font-bold text-slate-700 mb-1">
-                      Giá Vốn (Nhập):
+                      Giá Vốn Nhập (VNĐ):
                     </label>
                     <input
                       type="number"
@@ -1153,7 +1283,7 @@ export default function InventoryPage() {
                   </div>
                   <div>
                     <label className="block font-bold text-slate-700 mb-1">
-                      Giá Bán Ra:
+                      Giá Bán Ra (VNĐ):
                     </label>
                     <input
                       type="number"
@@ -1191,4 +1321,3 @@ export default function InventoryPage() {
     </div>
   );
 }
-

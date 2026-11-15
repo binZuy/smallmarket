@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { items, type = 'EXPORT', notes } = body;
+    const { items, type = 'EXPORT', reason = 'EXPORT', notes } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -21,7 +21,14 @@ export async function POST(request: Request) {
 
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const prefix = movementType === 'DAMAGE' ? 'PX-HH' : movementType === 'ADJUSTMENT' ? 'PKK' : 'PX';
+    const prefix =
+      movementType === 'DAMAGE'
+        ? 'PX-HH'
+        : movementType === 'ADJUSTMENT'
+        ? 'PKK'
+        : reason === 'USAGE'
+        ? 'PX-PC'
+        : 'PX';
     const referenceCode = `${prefix}-${dateStr}-${randomSuffix}`;
 
     const result = await prisma.$transaction(async (tx) => {
@@ -47,6 +54,13 @@ export async function POST(request: Request) {
           },
         });
 
+        const defaultNote =
+          movementType === 'DAMAGE'
+            ? 'Xuất hủy / hỏng / hết hạn'
+            : reason === 'USAGE'
+            ? 'Xuất dùng pha chế quầy nước'
+            : 'Xuất kho / bán sỉ';
+
         const invTx = await tx.inventoryTransaction.create({
           data: {
             type: movementType as any,
@@ -56,7 +70,7 @@ export async function POST(request: Request) {
             unitPrice: product.costPrice,
             totalAmount: qty * product.costPrice,
             referenceCode,
-            notes: item.notes || notes || (movementType === 'DAMAGE' ? 'Xuất hủy / hỏng / hết hạn' : 'Xuất kho'),
+            notes: item.notes || notes || defaultNote,
           },
         });
 
@@ -75,4 +89,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
