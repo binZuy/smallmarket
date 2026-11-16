@@ -17,9 +17,10 @@ export async function GET(request: Request) {
           mode: 'insensitive',
         },
       },
-      orderBy: {
-        createdAt: 'asc',
-      },
+      orderBy: [
+        { category: 'asc' },
+        { name: 'asc' },
+      ],
     });
 
     return NextResponse.json(products);

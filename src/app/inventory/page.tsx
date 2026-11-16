@@ -22,6 +22,8 @@ import {
   X,
   Coffee,
   Trash2,
+  HelpCircle,
+  Tag,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -315,33 +317,6 @@ export default function InventoryPage() {
     }
   };
 
-  // Export to Excel
-  const handleExportExcel = () => {
-    const dataToExport = products.map((p, idx) => ({
-      STT: idx + 1,
-      'Tên Hàng': p.name,
-      'Danh Mục': p.category || 'Gia dụng',
-      'ĐVT': p.unit,
-      'Tồn Kho': p.stockQuantity,
-      'Cảnh Báo Tối Thiểu': p.minStockLevel,
-      'Giá Nhập (VNĐ)': p.costPrice,
-      'Giá Bán (VNĐ)': p.sellingPrice,
-      'Tổng Tiền Vốn': p.costValue,
-      'Tổng Tiền Bán': p.sellingValue,
-      'Trạng Thái':
-        p.stockStatus === 'OUT_OF_STOCK'
-          ? 'Hết hàng'
-          : p.stockStatus === 'LOW_STOCK'
-          ? 'Sắp hết hàng'
-          : 'Còn hàng',
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'TonKho');
-    XLSX.writeFile(wb, `BaoCao_TonKho_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  };
-
   // Categories list
   const categoryList = Array.from(new Set(products.map((p) => p.category).filter(Boolean))) as string[];
 
@@ -353,6 +328,47 @@ export default function InventoryPage() {
     return matchesSearch && matchesCategory;
   });
 
+  // Calculate totals for filtered list
+  const totalFilteredUnits = filteredProducts.reduce((acc, p) => acc + Math.max(0, p.stockQuantity), 0);
+  const totalFilteredCost = filteredProducts.reduce((acc, p) => acc + p.costValue, 0);
+  const totalFilteredSelling = filteredProducts.reduce((acc, p) => acc + p.sellingValue, 0);
+  const totalFilteredProfit = totalFilteredSelling - totalFilteredCost;
+
+  // Export to Excel with full detailed invoice columns
+  const handleExportExcel = () => {
+    const dataToExport = filteredProducts.map((p, idx) => {
+      const profitPerUnit = p.sellingPrice > 0 ? p.sellingPrice - p.costPrice : 0;
+      const marginPct = p.sellingPrice > 0 ? ((profitPerUnit / p.sellingPrice) * 100).toFixed(1) : '0';
+      const potentialProfit = p.sellingValue - p.costValue;
+      return {
+        'STT': idx + 1,
+        'Tên Hàng / Nguyên Liệu': p.name,
+        'Danh Mục': p.category || 'Khác',
+        'Đơn Vị Tính (ĐVT)': p.unit,
+        'Số Lượng Tồn': p.stockQuantity,
+        'Cảnh Báo Tối Thiểu': p.minStockLevel,
+        'Đơn Giá Nhập (VNĐ/ĐVT)': p.costPrice,
+        'Đơn Giá Bán (VNĐ/ĐVT)': p.sellingPrice,
+        'Lãi / 1 Đơn Vị (VNĐ)': profitPerUnit,
+        'Tỷ Suất Lãi (%)': marginPct + '%',
+        'Tổng Tiền Vốn Tồn Kho (VNĐ)': p.costValue,
+        'Tổng Tiền Bán Dự Kiến (VNĐ)': p.sellingValue,
+        'Lợi Nhuận Tồn Dự Kiến (VNĐ)': potentialProfit,
+        'Trạng Thái':
+          p.stockStatus === 'OUT_OF_STOCK'
+            ? 'Hết hàng'
+            : p.stockStatus === 'LOW_STOCK'
+            ? 'Sắp hết hàng'
+            : 'Còn hàng',
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'TonKhoChiTiet');
+    XLSX.writeFile(wb, `BangKe_GiaNhap_GiaBan_TonKho_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
   const totalImportCalc = importItems.reduce(
     (acc, it) => acc + (Number(it.quantity) || 0) * (Number(it.costPrice) || 0),
     0
@@ -362,16 +378,16 @@ export default function InventoryPage() {
     <div className="min-h-screen bg-[#fdf7f4] flex flex-col font-sans pb-16">
       <Navbar />
 
-      <main className="flex-1 max-w-5xl w-full mx-auto px-2.5 sm:px-6 py-3 space-y-3">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-6 py-3 space-y-3">
         {/* Header Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-rose-200/60 pb-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-black text-[#2d1b22] flex items-center gap-2">
               <Boxes className="w-6 h-6 text-rose-500" />
-              Quản Lý Xuất Nhập & Kho Hàng
+              Bảng Kê Hàng Hóa, Giá Nhập & Giá Bán
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 font-medium">
-              Theo dõi tồn kho theo thời gian thực, nhập hàng, xuất kho và kiểm soát nguyên vật liệu.
+              Kiểm soát chi tiết đơn giá nhập, đơn giá bán, chênh lệch lợi nhuận và số lượng tồn kho từng mặt hàng.
             </p>
           </div>
 
@@ -381,7 +397,7 @@ export default function InventoryPage() {
               className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs"
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>Xuất Excel</span>
+              <span>Xuất Excel Đầy Đủ</span>
             </button>
             <button
               onClick={fetchInventory}
@@ -407,13 +423,13 @@ export default function InventoryPage() {
                 {summary.totalStockUnits.toLocaleString('vi-VN')} <span className="text-xs font-bold text-slate-400">đơn vị</span>
               </div>
               <div className="text-[11px] text-slate-500 font-medium mt-0.5">
-                {summary.totalProducts} mặt hàng trong kho
+                {summary.totalProducts} mặt hàng trong danh mục
               </div>
             </div>
 
             <div className="bg-white p-3 rounded-xl border border-rose-100 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Giá Trị Vốn Tồn</span>
+                <span className="text-xs font-semibold text-slate-500">Tổng Tiền Vốn Tồn</span>
                 <span className="p-1.5 bg-amber-50 text-amber-600 rounded-lg">
                   <DollarSign className="w-4 h-4" />
                 </span>
@@ -422,13 +438,13 @@ export default function InventoryPage() {
                 {formatVND(summary.totalCostValue)}
               </div>
               <div className="text-[11px] text-slate-500 font-medium mt-0.5">
-                Tiền vốn nằm trong kho
+                Vốn đầu tư đang nằm trong kho
               </div>
             </div>
 
             <div className="bg-white p-3 rounded-xl border border-rose-100 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Doanh Thu Dự Kiến</span>
+                <span className="text-xs font-semibold text-slate-500">Tổng Doanh Thu Dự Kiến</span>
                 <span className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg">
                   <TrendingUp className="w-4 h-4" />
                 </span>
@@ -437,13 +453,13 @@ export default function InventoryPage() {
                 {formatVND(summary.totalSellingValue)}
               </div>
               <div className="text-[11px] text-emerald-600 font-bold mt-0.5">
-                Dự kiến lời +{formatVND(summary.potentialProfit)}
+                Lãi dự kiến khi bán hết: +{formatVND(summary.potentialProfit)}
               </div>
             </div>
 
             <div className="bg-white p-3 rounded-xl border border-rose-100 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Cảnh Báo Kho</span>
+                <span className="text-xs font-semibold text-slate-500">Cảnh Báo Nhập Thêm</span>
                 <span className="p-1.5 bg-rose-50 text-rose-600 rounded-lg">
                   <AlertTriangle className="w-4 h-4" />
                 </span>
@@ -452,7 +468,7 @@ export default function InventoryPage() {
                 <span className="text-lg sm:text-xl font-black text-rose-600">
                   {summary.lowStockCount + summary.outOfStockCount}
                 </span>
-                <span className="text-xs font-bold text-slate-400">món cần nhập</span>
+                <span className="text-xs font-bold text-slate-400">mặt hàng</span>
               </div>
               <div className="text-[11px] text-slate-500 font-medium mt-0.5">
                 {summary.outOfStockCount} hết hàng · {summary.lowStockCount} sắp hết
@@ -472,7 +488,7 @@ export default function InventoryPage() {
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>Kho Hàng & Tồn Kho ({products.length})</span>
+            <span>Bảng Giá & Tồn Kho ({products.length} món)</span>
           </button>
 
           <button
@@ -484,7 +500,7 @@ export default function InventoryPage() {
             }`}
           >
             <ArrowDownToLine className="w-3.5 h-3.5" />
-            <span>Nhập Hàng (Stock In)</span>
+            <span>Tạo Phiếu Nhập Hàng</span>
           </button>
 
           <button
@@ -496,7 +512,7 @@ export default function InventoryPage() {
             }`}
           >
             <ArrowUpFromLine className="w-3.5 h-3.5" />
-            <span>Xuất Kho / Huỷ Hàng</span>
+            <span>Xuất Kho / Xuất Pha Chế</span>
           </button>
 
           <button
@@ -508,11 +524,11 @@ export default function InventoryPage() {
             }`}
           >
             <History className="w-3.5 h-3.5" />
-            <span>Lịch Sử Xuất Nhập</span>
+            <span>Lịch Sử Xuất Nhập (Input / Output)</span>
           </button>
         </div>
 
-        {/* TAB 1: KHO HÀNG & TỒN KHO */}
+        {/* TAB 1: KHO HÀNG & TỒN KHO - FULL DETAIL INVOICE STYLE */}
         {activeTab === 'stock' && (
           <div className="bg-white rounded-xl border border-rose-200/60 shadow-xs overflow-hidden space-y-2">
             {/* Search & Status Filters */}
@@ -537,7 +553,7 @@ export default function InventoryPage() {
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  Tất cả
+                  Tất cả ({products.length})
                 </button>
                 <button
                   onClick={() => setStatusFilter('low')}
@@ -605,98 +621,211 @@ export default function InventoryPage() {
                 ))}
             </div>
 
-            {/* Inventory Table */}
+            {/* COMPREHENSIVE INVOICE-STYLE INVENTORY TABLE */}
             <div className="overflow-x-auto border-t border-rose-100">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-rose-50/60 text-slate-700 font-black border-b border-rose-100 uppercase tracking-wider text-[11px]">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-[#f7ece8] text-slate-800 font-black border-b border-rose-200 uppercase tracking-wider text-[11px]">
                   <tr>
-                    <th className="py-2.5 px-3">Tên Hàng / Nguyên Liệu</th>
-                    <th className="py-2.5 px-3">Danh Mục</th>
-                    <th className="py-2.5 px-3 text-center">Tồn Kho</th>
-                    <th className="py-2.5 px-3 text-right">Giá Vốn Nhập</th>
-                    <th className="py-2.5 px-3 text-right">Giá Bán Ra</th>
-                    <th className="py-2.5 px-3 text-right">Tổng Tiền Vốn</th>
-                    <th className="py-2.5 px-3 text-center">Trạng Thái</th>
-                    <th className="py-2.5 px-3 text-center">Chỉnh Sửa</th>
+                    <th className="py-2.5 px-2 text-center w-10">STT</th>
+                    <th className="py-2.5 px-3 min-w-[180px]">Tên Hàng / Nguyên Liệu</th>
+                    <th className="py-2.5 px-2.5 whitespace-nowrap">Danh Mục</th>
+                    <th className="py-2.5 px-2 text-center whitespace-nowrap">ĐVT</th>
+                    <th className="py-2.5 px-3 text-center whitespace-nowrap">Số Lượng Tồn</th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap bg-amber-50/70 border-x border-amber-100">
+                      Đơn Giá Nhập (Vốn/ĐVT)
+                    </th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap bg-rose-50/70 border-r border-rose-100">
+                      Đơn Giá Bán (Bán/ĐVT)
+                    </th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap bg-emerald-50/70 border-r border-emerald-100">
+                      Lãi / 1 ĐVT
+                    </th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap">Tổng Vốn Tồn</th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap">Tổng Tiền Bán Dự Kiến</th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap text-emerald-800">Lãi Tồn Dự Kiến</th>
+                    <th className="py-2.5 px-2 text-center whitespace-nowrap">Trạng Thái</th>
+                    <th className="py-2.5 px-2 text-center whitespace-nowrap">Sửa</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-rose-100/70 font-medium">
-                  {filteredProducts.map((p) => (
-                    <tr key={p.id} className="hover:bg-rose-50/40 transition-colors">
-                      <td className="py-2.5 px-3">
-                        <div className="font-bold text-[#2d1b22]">{p.name}</div>
-                        <div className="text-[10px] text-slate-400">Đơn vị: {p.unit}</div>
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                            p.category === 'Nguyên liệu pha chế'
-                              ? 'bg-emerald-100 text-emerald-800 font-black'
-                              : 'bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          {p.category || 'Gia dụng'}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3 text-center">
-                        <span
-                          className={`font-black text-sm px-2 py-0.5 rounded-md ${
-                            p.stockQuantity <= 0
-                              ? 'bg-rose-100 text-rose-700 font-extrabold'
-                              : p.stockQuantity <= (p.minStockLevel || 5)
-                              ? 'bg-amber-100 text-amber-700 font-extrabold'
-                              : 'text-slate-800'
-                          }`}
-                        >
-                          {p.stockQuantity} <span className="text-[10px] font-bold text-slate-400">{p.unit}</span>
-                        </span>
-                        <div className="text-[10px] text-slate-400 mt-0.5">
-                          Ngưỡng min: {p.minStockLevel || 5}
-                        </div>
-                      </td>
-                      <td className="py-2.5 px-3 text-right text-slate-700 font-semibold">
-                        {formatVND(p.costPrice)}
-                      </td>
-                      <td className="py-2.5 px-3 text-right text-rose-600 font-bold">
-                        {p.sellingPrice > 0 ? formatVND(p.sellingPrice) : 'Nguyên liệu'}
-                      </td>
-                      <td className="py-2.5 px-3 text-right text-slate-900 font-bold">
-                        {formatVND(p.costValue)}
-                      </td>
-                      <td className="py-2.5 px-3 text-center">
-                        {p.stockStatus === 'OUT_OF_STOCK' ? (
-                          <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-700">
-                            HẾT HÀNG
+                <tbody className="divide-y divide-rose-100/70 font-medium text-slate-800">
+                  {filteredProducts.map((p, idx) => {
+                    const profitPerUnit = p.sellingPrice > 0 ? p.sellingPrice - p.costPrice : 0;
+                    const marginPercent =
+                      p.sellingPrice > 0
+                        ? (((p.sellingPrice - p.costPrice) / p.sellingPrice) * 100).toFixed(0)
+                        : null;
+                    const potentialProfit = p.sellingValue - p.costValue;
+
+                    return (
+                      <tr key={p.id} className="hover:bg-rose-50/40 transition-colors">
+                        {/* STT */}
+                        <td className="py-2.5 px-2 text-center font-bold text-slate-400">
+                          {idx + 1}
+                        </td>
+
+                        {/* Tên Hàng */}
+                        <td className="py-2.5 px-3">
+                          <div className="font-bold text-[#2d1b22] text-xs sm:text-sm">{p.name}</div>
+                          {p.category === 'Nguyên liệu pha chế' && (
+                            <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1 mt-0.5">
+                              <Coffee className="w-2.5 h-2.5" /> Nguyên liệu quầy nước
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Danh Mục */}
+                        <td className="py-2.5 px-2.5 whitespace-nowrap">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                              p.category === 'Nguyên liệu pha chế'
+                                ? 'bg-emerald-100 text-emerald-800 font-black'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {p.category || 'Khác'}
                           </span>
-                        ) : p.stockStatus === 'LOW_STOCK' ? (
-                          <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-700">
-                            SẮP HẾT
+                        </td>
+
+                        {/* ĐVT */}
+                        <td className="py-2.5 px-2 text-center font-bold text-slate-600 whitespace-nowrap">
+                          {p.unit}
+                        </td>
+
+                        {/* Số Lượng Tồn */}
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                          <span
+                            className={`font-black text-xs sm:text-sm px-2 py-0.5 rounded-md ${
+                              p.stockQuantity <= 0
+                                ? 'bg-rose-100 text-rose-700 font-extrabold'
+                                : p.stockQuantity <= (p.minStockLevel || 5)
+                                ? 'bg-amber-100 text-amber-800 font-extrabold'
+                                : 'text-slate-900'
+                            }`}
+                          >
+                            {p.stockQuantity.toLocaleString('vi-VN')}
                           </span>
-                        ) : (
-                          <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-700">
-                            CÒN HÀNG
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 text-center">
-                        <button
-                          onClick={() => handleOpenEdit(p)}
-                          className="p-1.5 text-rose-600 hover:bg-rose-100 rounded-lg transition-all"
-                          title="Chỉnh sửa tồn kho & giá"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                          <div className="text-[9px] text-slate-400 mt-0.5">
+                            Min: {p.minStockLevel || 5}
+                          </div>
+                        </td>
+
+                        {/* Đơn Giá Nhập */}
+                        <td className="py-2.5 px-3 text-right font-bold text-amber-900 bg-amber-50/40 border-x border-amber-100 whitespace-nowrap">
+                          {formatVND(p.costPrice)}
+                          <div className="text-[9px] text-amber-700/80 font-normal">đ / {p.unit}</div>
+                        </td>
+
+                        {/* Đơn Giá Bán */}
+                        <td className="py-2.5 px-3 text-right font-black text-rose-700 bg-rose-50/40 border-r border-rose-100 whitespace-nowrap">
+                          {p.sellingPrice > 0 ? (
+                            <>
+                              {formatVND(p.sellingPrice)}
+                              <div className="text-[9px] text-rose-600/80 font-normal">đ / {p.unit}</div>
+                            </>
+                          ) : (
+                            <span className="text-slate-400 font-normal">Chưa bán</span>
+                          )}
+                        </td>
+
+                        {/* Lãi Trên 1 Đơn Vị */}
+                        <td className="py-2.5 px-3 text-right bg-emerald-50/40 border-r border-emerald-100 whitespace-nowrap">
+                          {p.sellingPrice > 0 ? (
+                            <>
+                              <div className="font-black text-emerald-700">
+                                +{formatVND(profitPerUnit)}
+                              </div>
+                              <div className="text-[9px] font-bold text-emerald-600">
+                                Lãi {marginPercent}%
+                              </div>
+                            </>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </td>
+
+                        {/* Tổng Vốn Tồn */}
+                        <td className="py-2.5 px-3 text-right font-bold text-slate-800 whitespace-nowrap">
+                          {formatVND(p.costValue)}
+                        </td>
+
+                        {/* Tổng Tiền Bán Dự Kiến */}
+                        <td className="py-2.5 px-3 text-right font-bold text-slate-900 whitespace-nowrap">
+                          {p.sellingPrice > 0 ? formatVND(p.sellingValue) : '-'}
+                        </td>
+
+                        {/* Lãi Tồn Dự Kiến */}
+                        <td className="py-2.5 px-3 text-right font-black text-emerald-700 whitespace-nowrap">
+                          {p.sellingPrice > 0 ? `+${formatVND(potentialProfit)}` : '-'}
+                        </td>
+
+                        {/* Trạng Thái */}
+                        <td className="py-2.5 px-2 text-center whitespace-nowrap">
+                          {p.stockStatus === 'OUT_OF_STOCK' ? (
+                            <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-700">
+                              HẾT
+                            </span>
+                          ) : p.stockStatus === 'LOW_STOCK' ? (
+                            <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800">
+                              SẮP HẾT
+                            </span>
+                          ) : (
+                            <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-700">
+                              CÒN
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Sửa */}
+                        <td className="py-2.5 px-2 text-center whitespace-nowrap">
+                          <button
+                            onClick={() => handleOpenEdit(p)}
+                            className="p-1.5 text-rose-600 hover:bg-rose-100 rounded-lg transition-all"
+                            title="Chỉnh sửa đơn giá & tồn kho"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+
                   {filteredProducts.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="py-8 text-center text-slate-400 text-xs font-semibold">
+                      <td colSpan={13} className="py-8 text-center text-slate-400 text-xs font-semibold">
                         Không tìm thấy mặt hàng hoặc nguyên liệu nào phù hợp.
                       </td>
                     </tr>
                   )}
                 </tbody>
+
+                {/* SUMMARY FOOTER ROW */}
+                {filteredProducts.length > 0 && (
+                  <tfoot className="bg-[#f5e6e1] font-black text-xs text-slate-900 border-t-2 border-rose-300">
+                    <tr>
+                      <td colSpan={4} className="py-3 px-3 uppercase tracking-wider text-[11px]">
+                        TỔNG CỘNG ({filteredProducts.length} mặt hàng)
+                      </td>
+                      <td className="py-3 px-3 text-center text-rose-950 font-black">
+                        {totalFilteredUnits.toLocaleString('vi-VN')}
+                      </td>
+                      <td colSpan={3} className="py-3 px-3 text-center text-slate-400 font-normal">
+                        -
+                      </td>
+                      <td className="py-3 px-3 text-right text-amber-900 font-black">
+                        {formatVND(totalFilteredCost)}
+                      </td>
+                      <td className="py-3 px-3 text-right text-slate-950 font-black">
+                        {formatVND(totalFilteredSelling)}
+                      </td>
+                      <td className="py-3 px-3 text-right text-emerald-800 font-black text-sm">
+                        +{formatVND(totalFilteredProfit)}
+                      </td>
+                      <td colSpan={2} className="py-3 px-2 text-center text-slate-400 font-normal">
+                        -
+                      </td>
+                    </tr>
+                  </tfoot>
+                )}
               </table>
             </div>
           </div>
@@ -708,7 +837,7 @@ export default function InventoryPage() {
             <div className="flex items-center justify-between border-b border-rose-100 pb-2.5">
               <h2 className="font-black text-sm text-[#2d1b22] flex items-center gap-1.5">
                 <ArrowDownToLine className="w-4 h-4 text-rose-500" />
-                Tạo Phiếu Nhập Hàng / Nhập Nguyên Liệu
+                Tạo Phiếu Nhập Hàng / Nhập Nguyên Liệu Mới
               </h2>
               <div className="text-xs font-bold text-slate-500">
                 Mã phiếu: Tự động sinh (PN-...)
@@ -828,12 +957,12 @@ export default function InventoryPage() {
 
                     <div className="sm:col-span-2">
                       <label className="text-[10px] font-bold text-slate-500 block mb-0.5">
-                        Giá vốn nhập:
+                        Đơn giá vốn nhập (1 ĐVT):
                       </label>
                       <input
                         type="number"
                         min="0"
-                        step="1000"
+                        step="500"
                         value={item.costPrice}
                         onChange={(e) => {
                           const updated = [...importItems];
@@ -1199,14 +1328,19 @@ export default function InventoryPage() {
           </div>
         )}
 
-        {/* Modal: Quick Edit Product Stock & Prices */}
+        {/* Modal: Quick Edit Product Stock & Prices with Real-time Profit Preview */}
         {editingProduct && (
           <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-3">
             <div className="bg-white rounded-2xl max-w-md w-full p-4 border border-rose-200 shadow-xl space-y-3">
               <div className="flex items-center justify-between border-b border-rose-100 pb-2">
-                <h3 className="font-black text-sm text-[#2d1b22]">
-                  Cập Nhật Kho & Giá: {editingProduct.name}
-                </h3>
+                <div>
+                  <h3 className="font-black text-sm text-[#2d1b22]">
+                    Chỉnh Sửa Giá & Tồn Kho
+                  </h3>
+                  <p className="text-[11px] font-bold text-rose-600 truncate max-w-xs">
+                    {editingProduct.name}
+                  </p>
+                </div>
                 <button
                   onClick={() => setEditingProduct(null)}
                   className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
@@ -1230,7 +1364,7 @@ export default function InventoryPage() {
                   </div>
                   <div>
                     <label className="block font-bold text-slate-700 mb-1">
-                      Đơn vị tính:
+                      Đơn vị tính (ĐVT):
                     </label>
                     <input
                       type="text"
@@ -1241,57 +1375,70 @@ export default function InventoryPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">
-                    Số lượng tồn kho thực tế:
-                  </label>
-                  <input
-                    type="number"
-                    value={editStock}
-                    onChange={(e) => setEditStock(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-rose-200 rounded-lg font-black text-base text-rose-600"
-                  />
-                  <span className="text-[10px] text-slate-400">
-                    * Điều chỉnh trực tiếp số lượng tồn kho theo số đếm thực tế của bạn.
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">
-                    Ngưỡng cảnh báo sắp hết (Min stock):
-                  </label>
-                  <input
-                    type="number"
-                    value={editMinStock}
-                    onChange={(e) => setEditMinStock(Number(e.target.value))}
-                    className="w-full px-3 py-1.5 border border-rose-200 rounded-lg font-bold"
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Số lượng tồn kho thực tế:
+                    </label>
+                    <input
+                      type="number"
+                      value={editStock}
+                      onChange={(e) => setEditStock(Number(e.target.value))}
+                      className="w-full px-3 py-1.5 border border-rose-200 rounded-lg font-black text-base text-rose-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Cảnh báo sắp hết (Min):
+                    </label>
+                    <input
+                      type="number"
+                      value={editMinStock}
+                      onChange={(e) => setEditMinStock(Number(e.target.value))}
+                      className="w-full px-3 py-1.5 border border-rose-200 rounded-lg font-bold"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block font-bold text-slate-700 mb-1">
-                      Giá Vốn Nhập (VNĐ):
+                      Đơn giá vốn nhập (1 {editUnit}):
                     </label>
                     <input
                       type="number"
-                      step="1000"
+                      step="500"
                       value={editCost}
                       onChange={(e) => setEditCost(Number(e.target.value))}
-                      className="w-full px-3 py-1.5 border border-rose-200 rounded-lg font-bold"
+                      className="w-full px-3 py-1.5 border border-amber-300 bg-amber-50/50 rounded-lg font-bold text-amber-900"
                     />
                   </div>
                   <div>
                     <label className="block font-bold text-slate-700 mb-1">
-                      Giá Bán Ra (VNĐ):
+                      Đơn giá bán lẻ (1 {editUnit}):
                     </label>
                     <input
                       type="number"
-                      step="1000"
+                      step="500"
                       value={editPrice}
                       onChange={(e) => setEditPrice(Number(e.target.value))}
-                      className="w-full px-3 py-1.5 border border-rose-200 rounded-lg font-bold text-rose-600"
+                      className="w-full px-3 py-1.5 border border-rose-300 bg-rose-50/50 rounded-lg font-bold text-rose-700"
                     />
+                  </div>
+                </div>
+
+                {/* Real-time Profit Preview Box */}
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
+                  <div className="flex items-center justify-between font-bold text-slate-700 text-[11px]">
+                    <span>Lãi chênh lệch trên 1 {editUnit}:</span>
+                    <span className="font-black text-emerald-700 text-xs">
+                      {editPrice > 0 ? `+${formatVND(editPrice - editCost)}` : 'Nguyên liệu'}
+                      {editPrice > 0 && ` (${(((editPrice - editCost) / editPrice) * 100).toFixed(0)}%)`}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-emerald-200/60">
+                    <span>Tổng vốn lô hàng tồn: <b className="text-amber-800">{formatVND(editStock * editCost)}</b></span>
+                    <span>Doanh thu dự kiến: <b className="text-rose-800">{formatVND(editStock * editPrice)}</b></span>
                   </div>
                 </div>
               </div>

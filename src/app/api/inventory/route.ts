@@ -23,7 +23,7 @@ export async function GET(request: Request) {
         ...(category && { category }),
       },
       orderBy: [
-        { stockQuantity: 'asc' },
+        { category: 'asc' },
         { name: 'asc' },
       ],
     });
